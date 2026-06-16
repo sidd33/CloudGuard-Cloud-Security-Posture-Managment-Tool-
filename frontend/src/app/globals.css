@@ -1,0 +1,104 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 231 50% 5%;
+    --foreground: 210 40% 98%;
+
+    --card: 216 20% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 218 24% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 186 100% 50%;
+    --primary-foreground: 231 50% 5%;
+
+    --secondary: 218 24% 11%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 218 24% 11%;
+    --muted-foreground: 215 16% 58%;
+
+    --accent: 215 25% 27%;
+    --accent-foreground: 186 100% 50%;
+
+    --destructive: 351 100% 63%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 100% / 0.07;
+    --input: 0 0% 100% / 0.07;
+    --ring: 186 100% 50%;
+
+    --radius: 8px;
+  }
+
+  .dark {
+    --background: 231 50% 5%;
+    --foreground: 210 40% 98%;
+
+    --card: 216 20% 9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 218 24% 11%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 186 100% 50%;
+    --primary-foreground: 231 50% 5%;
+
+    --secondary: 218 24% 11%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 218 24% 11%;
+    --muted-foreground: 215 16% 58%;
+
+    --accent: 215 25% 27%;
+    --accent-foreground: 186 100% 50%;
+
+    --destructive: 351 100% 63%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 100% / 0.07;
+    --input: 0 0% 100% / 0.07;
+    --ring: 186 100% 50%;
+  }
+
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #07080F;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
