@@ -10,51 +10,61 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#07080F",
-        foreground: "#F8FAFC",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        sidebar: {
+          DEFAULT: "var(--sidebar)",
+          foreground: "var(--sidebar-foreground)",
+        },
         card: {
-          DEFAULT: "#0D1117",
-          foreground: "#F8FAFC",
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
         },
         popover: {
-          DEFAULT: "#161B24",
-          foreground: "#F8FAFC",
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
         },
         primary: {
-          DEFAULT: "#00E5FF",
-          foreground: "#07080F",
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
         },
         secondary: {
-          DEFAULT: "#161B24",
-          foreground: "#F8FAFC",
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
         },
         muted: {
-          DEFAULT: "#161B24",
-          foreground: "#94A3B8",
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
         },
         accent: {
-          DEFAULT: "#1F2937",
-          foreground: "#00E5FF",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
         },
         destructive: {
-          DEFAULT: "#FF4560",
-          foreground: "#FFFFFF",
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
         },
         warning: {
-          DEFAULT: "#F5A623",
-          foreground: "#07080F",
+          DEFAULT: "var(--warning)",
+          foreground: "var(--warning-foreground)",
         },
         success: {
-          DEFAULT: "#00E096",
-          foreground: "#07080F",
+          DEFAULT: "var(--success)",
+          foreground: "var(--success-foreground)",
         },
         info: {
-          DEFAULT: "#775DD0",
-          foreground: "#FFFFFF",
+          DEFAULT: "var(--info)",
+          foreground: "var(--info-foreground)",
         },
-        border: "rgba(255,255,255,0.07)",
-        input: "rgba(255,255,255,0.07)",
-        ring: "#00E5FF",
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        status: {
+          critical: "var(--status-critical)",
+          high: "var(--status-high)",
+          medium: "var(--status-medium)",
+          safe: "var(--status-safe)",
+        }
       },
       borderRadius: {
         lg: "8px",
@@ -62,9 +72,12 @@ const config: Config = {
         sm: "4px",
       },
       fontFamily: {
-        sans: ["var(--font-inter)", "sans-serif"],
+        sans: ["Amazon Ember", "Helvetica Neue", "Roboto", "Arial", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
       },
+      boxShadow: {
+        'subtle': '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+      }
     },
   },
   plugins: [],

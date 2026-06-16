@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/layout/Sidebar";
 import { cn } from "@/lib/utils";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+import { ThemeProvider } from "@/components/ThemeProvider";
+
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
@@ -19,14 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("dark", inter.variable, jetbrains.variable, "font-sans")}>
+    <html lang="en" className={cn(jetbrains.variable, "font-sans")} suppressHydrationWarning>
       <body className="font-sans antialiased text-foreground flex h-screen overflow-hidden bg-background">
-        <TooltipProvider>
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto bg-background relative">
-            {children}
-          </main>
-        </TooltipProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <TooltipProvider>
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto bg-background relative">
+              {children}
+            </main>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

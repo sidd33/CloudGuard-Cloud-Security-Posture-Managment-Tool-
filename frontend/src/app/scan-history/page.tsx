@@ -232,7 +232,7 @@ export default function ScanHistory() {
     switch (status) {
       case 'RUNNING':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#00E5FF]/10 text-[#00E5FF] text-[10px] font-bold border border-[#00E5FF]/20 font-mono">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold border border-primary/20 font-sans">
             <Loader2 className="w-3 h-3 animate-spin" />
             RUNNING
           </span>
@@ -240,7 +240,7 @@ export default function ScanHistory() {
       case 'FAILED':
         return (
           <span 
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FF4560]/10 text-[#FF4560] text-[10px] font-bold border border-[#FF4560]/20 font-mono cursor-pointer"
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-destructive/10 text-destructive text-[10px] font-bold border border-destructive/20 font-sans cursor-pointer"
             title={error || "Scan failed due to an internal error"}
           >
             <XCircle className="w-3 h-3" />
@@ -249,7 +249,7 @@ export default function ScanHistory() {
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#00E096]/10 text-[#00E096] text-[10px] font-bold border border-[#00E096]/20 font-mono">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#1f883d]/10 text-[#1f883d] text-[10px] font-bold border border-[#1f883d]/20 font-sans">
             <CheckCircle className="w-3 h-3" />
             COMPLETED
           </span>
@@ -258,22 +258,22 @@ export default function ScanHistory() {
   };
 
   return (
-    <div className="p-8 space-y-6 bg-[#07080F] min-h-screen text-slate-100 font-sans">
+    <div className="p-8 space-y-6 bg-background min-h-screen text-foreground font-sans">
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] pb-6">
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight font-sans flex items-center gap-2">
-            <History className="w-6 h-6 text-[#00E5FF]" />
+          <h1 className="text-2xl font-bold text-foreground tracking-tight font-sans flex items-center gap-2">
+            <History className="w-6 h-6 text-primary" />
             Scan History
           </h1>
-          <p className="text-[13px] text-slate-400 mt-1">Audit log of compliance check runs across connected cloud nodes</p>
+          <p className="text-[13px] text-muted-foreground mt-1">Audit log of compliance check runs across connected cloud nodes</p>
         </div>
         <Button 
           onClick={handleRefresh} 
           disabled={isRefreshing}
           variant="outline"
-          className="border-[rgba(255,255,255,0.1)] text-slate-300 hover:bg-white/5 bg-transparent h-9 px-4 gap-2 font-medium text-xs rounded transition-colors"
+          className="border-border text-foreground hover:bg-muted bg-card h-9 px-4 gap-2 font-semibold text-xs rounded transition-colors shadow-sm"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
           Refresh Log
@@ -281,40 +281,40 @@ export default function ScanHistory() {
       </div>
 
       {/* Main Table */}
-      <div className="bg-[#0D1117] border border-[rgba(255,255,255,0.07)] rounded-xl overflow-hidden">
+      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
         <Table>
-          <TableHeader className="bg-transparent border-b border-[rgba(255,255,255,0.05)]">
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="text-slate-400 text-xs h-10 w-[150px]">Timestamp</TableHead>
-              <TableHead className="text-slate-400 text-xs h-10">AWS Account</TableHead>
-              <TableHead className="text-slate-400 text-xs h-10 w-[110px]">Duration</TableHead>
-              <TableHead className="text-slate-400 text-xs h-10 w-[120px]">Total Findings</TableHead>
-              <TableHead className="text-slate-400 text-xs h-10 w-[100px]">Critical</TableHead>
-              <TableHead className="text-slate-400 text-xs h-10 w-[120px]">Status</TableHead>
-              <TableHead className="text-slate-400 text-xs h-10 pr-6 w-[220px]">Error Details / Execution Notes</TableHead>
+          <TableHeader className="bg-muted/30 border-b border-border">
+            <TableRow className="hover:bg-transparent border-none">
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[150px]">Timestamp</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10">AWS Account</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[110px]">Duration</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[120px]">Total Findings</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[100px]">Critical</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[120px]">Status</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 pr-6 w-[220px]">Error Details / Execution Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {history.map((scan) => (
               <TableRow 
                 key={scan.id} 
-                className="border-b border-[rgba(255,255,255,0.05)] last:border-none hover:bg-white/5 transition-colors"
+                className="border-b border-border last:border-none hover:bg-muted/50 transition-colors"
               >
-                <TableCell className="py-3 font-mono text-[11px] text-slate-400" title={scan.fullTime}>
+                <TableCell className="py-3 font-sans text-[11px] text-muted-foreground" title={scan.fullTime}>
                   {scan.timestamp}
                 </TableCell>
-                <TableCell className="py-3 font-medium text-xs text-white">
+                <TableCell className="py-3 font-semibold text-xs text-foreground font-sans">
                   {scan.account}
                 </TableCell>
-                <TableCell className="py-3 font-mono text-xs text-slate-300">
+                <TableCell className="py-3 font-sans text-xs text-foreground">
                   {scan.duration}
                 </TableCell>
-                <TableCell className="py-3 font-mono text-xs text-slate-300">
+                <TableCell className="py-3 font-sans text-xs text-foreground">
                   {scan.total}
                 </TableCell>
-                <TableCell className="py-3 font-mono text-xs text-slate-300">
+                <TableCell className="py-3 font-sans text-xs text-foreground">
                   {scan.status === "FAILED" ? "-" : (
-                    <span className={scan.critical !== "0" && scan.critical !== "Calculating..." ? "text-[#FF4560] font-bold" : "text-slate-400"}>
+                    <span className={scan.critical !== "0" && scan.critical !== "Calculating..." ? "text-destructive font-bold" : "text-muted-foreground"}>
                       {scan.critical}
                     </span>
                   )}
@@ -322,14 +322,14 @@ export default function ScanHistory() {
                 <TableCell className="py-3">
                   {getStatusBadge(scan.status, scan.error)}
                 </TableCell>
-                <TableCell className="py-3 pr-6 text-xs text-slate-500 max-w-[220px] truncate" title={scan.error || "No errors encountered"}>
+                <TableCell className="py-3 pr-6 text-xs text-muted-foreground max-w-[220px] truncate font-sans" title={scan.error || "No errors encountered"}>
                   {scan.error ? (
-                    <span className="text-amber-500/80 flex items-center gap-1">
+                    <span className="text-orange-600 flex items-center gap-1">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                       {scan.error}
                     </span>
                   ) : scan.status === "RUNNING" ? (
-                    <span className="text-[#00E5FF]/80">Orchestrating scanner tasks...</span>
+                    <span className="text-primary font-medium">Orchestrating scanner tasks...</span>
                   ) : (
                     "Execution successful"
                   )}
@@ -341,10 +341,10 @@ export default function ScanHistory() {
       </div>
 
       {/* Info notice */}
-      <div className="flex items-start gap-2.5 p-4 rounded bg-[#161B24] border border-[rgba(255,255,255,0.05)] text-slate-400 text-xs">
-        <Info className="w-4 h-4 text-[#00E5FF] shrink-0 mt-0.5" />
+      <div className="flex items-start gap-2.5 p-4 rounded bg-muted border border-border text-muted-foreground text-xs">
+        <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <div className="space-y-1">
-          <p className="text-slate-300 font-semibold font-sans">Audit Logging Policy</p>
+          <p className="text-foreground font-bold font-sans">Audit Logging Policy</p>
           <p className="leading-relaxed font-sans">
             Scan logs are retained for 30 days. Inbound requests to the scanning API trigger parallel scanners that execute on secondary threads, resolving credentials and emitting SSE events for live updates.
           </p>

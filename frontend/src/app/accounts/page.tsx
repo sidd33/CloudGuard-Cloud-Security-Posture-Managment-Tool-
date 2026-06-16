@@ -43,6 +43,7 @@ interface AccountBackendType {
 }
 
 export default function Accounts() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -151,7 +152,9 @@ export default function Accounts() {
         loadAccounts();
       }, 4000);
 
-    } catch (err: any) {
+    } catch (error: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const err = error as any;
       console.error("Add account error details:", err.response?.data || err.message || err);
       const errMsg = err.response?.data?.error || "Please check your inputs.";
       alert(`Failed to connect account. Error: ${errMsg}`);
@@ -162,7 +165,7 @@ export default function Accounts() {
     if (isScanning) {
       return (
         <div className="relative w-[60px] h-[60px] flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-[#00E5FF] animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       );
     }
@@ -172,10 +175,10 @@ export default function Accounts() {
     const offset = circ - (score / 100) * circ;
     
     // Score color logic
-    let color = "#00E5FF"; // cyan
-    if (score < 50) color = "#FF4560"; // red
-    else if (score < 75) color = "#F5A623"; // amber
-    else if (score < 90) color = "#A3E635"; // yellow-green
+    let color = "var(--status-safe)"; // cyan/green
+    if (score < 50) color = "var(--status-critical)"; // red
+    else if (score < 75) color = "var(--status-high)"; // amber
+    else if (score < 90) color = "var(--status-medium)"; // yellow-green
 
     return (
       <div className="relative w-[60px] h-[60px] flex items-center justify-center">
@@ -184,7 +187,7 @@ export default function Accounts() {
             cx="30"
             cy="30"
             r={r}
-            stroke="rgba(255,255,255,0.04)"
+            stroke="var(--border)"
             strokeWidth="4.5"
             fill="transparent"
           />
@@ -202,26 +205,26 @@ export default function Accounts() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[12px] font-bold text-white font-mono">{score}</span>
+          <span className="text-[12px] font-bold text-foreground font-mono">{score}</span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="p-8 space-y-6 bg-[#07080F] min-h-screen text-slate-100 font-sans">
+    <div className="p-8 space-y-6 bg-background min-h-screen text-foreground font-sans">
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] pb-6">
+      <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-white tracking-tight font-sans">AWS Accounts</h1>
-          <p className="text-[13px] text-slate-400 mt-1">Connect and audit cloud environments under multi-tenant security monitors</p>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight font-sans">AWS Accounts</h1>
+          <p className="text-[13px] text-muted-foreground mt-1">Connect and audit cloud environments under multi-tenant security monitors</p>
         </div>
         <Button 
           onClick={() => setIsOpen(true)}
-          className="bg-[#00E5FF] text-[#07080F] hover:bg-[#00E5FF]/90 h-9 px-4 gap-2 font-bold text-xs rounded transition-colors"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 gap-2 font-bold text-xs rounded transition-colors"
         >
-          <Plus className="w-4 h-4 text-[#07080F]" />
+          <Plus className="w-4 h-4 text-primary-foreground" />
           Add Account
         </Button>
       </div>
@@ -229,50 +232,51 @@ export default function Accounts() {
       {/* Grid wrapper */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {accounts.length === 0 ? (
-          <div className="col-span-full border border-dashed border-[rgba(255,255,255,0.1)] rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-4">
-            <Cloud className="w-12 h-12 text-slate-600" />
+          <div className="col-span-full border border-dashed border-border rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-4">
+            <Cloud className="w-12 h-12 text-muted-foreground" />
             <div>
-              <p className="text-slate-300 font-semibold text-sm">No accounts configured</p>
-              <p className="text-slate-500 text-xs mt-1">Onboard an AWS credentials profile to orchestrate compliance checks.</p>
+              <p className="text-foreground font-semibold text-sm font-sans">No accounts configured</p>
+              <p className="text-muted-foreground text-xs mt-1 font-sans">Onboard an AWS credentials profile to orchestrate compliance checks.</p>
             </div>
             <Button 
               onClick={() => setIsOpen(true)}
-              className="bg-[#00E5FF] text-[#07080F] hover:bg-[#00E5FF]/90 text-xs h-9 px-4 font-bold rounded"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs h-9 px-4 font-bold rounded"
             >
               Connect First Account
             </Button>
           </div>
         ) : (
-          accounts.map(acc => (
-            <Card key={acc.id} className="bg-[#0D1117] border border-[rgba(255,255,255,0.07)] rounded-xl overflow-hidden hover:border-[#00E5FF]/30 transition-colors">
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          accounts.map((acc: any) => (
+            <Card key={acc.id} className="bg-card border border-border shadow-sm rounded-xl overflow-hidden hover:border-primary/50 transition-colors">
               <CardContent className="p-6 space-y-5">
                 
                 {/* Header row */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="text-base font-bold text-white tracking-tight">{acc.alias}</h3>
-                    <p className="text-xs text-slate-500 font-mono mt-1">ID: {acc.awsId}</p>
+                    <h3 className="text-base font-bold text-foreground tracking-tight">{acc.alias}</h3>
+                    <p className="text-xs text-muted-foreground font-mono mt-1">ID: {acc.awsId}</p>
                   </div>
-                  <Badge variant="outline" className="bg-[#161B24] border-[rgba(255,255,255,0.05)] text-slate-300 text-[10px] font-mono rounded">
+                  <Badge variant="outline" className="bg-muted border-border text-foreground text-[10px] font-mono rounded">
                     {acc.region}
                   </Badge>
                 </div>
 
                 {/* Score and status row */}
-                <div className="flex items-center justify-between py-2 border-y border-[rgba(255,255,255,0.04)]">
+                <div className="flex items-center justify-between py-2 border-y border-border">
                   <div className="flex items-center gap-4">
                     {drawMiniDonut(acc.score, acc.isScanning)}
                     <div>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Security Score</p>
-                      <p className="text-xs text-slate-300 font-sans mt-0.5">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Security Score</p>
+                      <p className="text-xs text-foreground font-sans mt-0.5">
                         {acc.isScanning ? "Evaluating Rules..." : acc.score >= 90 ? "Excellent Posture" : acc.score >= 75 ? "Satisfactory" : "At Risk"}
                       </p>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Last Checked</p>
-                    <p className="text-xs text-slate-300 font-mono mt-0.5">{acc.lastScanned}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Last Checked</p>
+                    <p className="text-xs text-foreground font-mono mt-0.5">{acc.lastScanned}</p>
                   </div>
                 </div>
 
@@ -280,12 +284,12 @@ export default function Accounts() {
                 <div className="flex justify-between items-center text-xs">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#FF4560]" />
-                      <span className="text-slate-400 font-mono">{acc.criticalFindings} Critical</span>
+                      <span className="w-2 h-2 rounded-full bg-[var(--status-critical)]" />
+                      <span className="text-muted-foreground font-mono">{acc.criticalFindings} Critical</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-[#F5A623]" />
-                      <span className="text-slate-400 font-mono">{acc.totalFindings} Total</span>
+                      <span className="w-2 h-2 rounded-full bg-[var(--status-high)]" />
+                      <span className="text-muted-foreground font-mono">{acc.totalFindings} Total</span>
                     </div>
                   </div>
 
@@ -294,7 +298,7 @@ export default function Accounts() {
                       onClick={() => handleScan(acc.id)} 
                       disabled={acc.isScanning}
                       variant="outline"
-                      className="border-[rgba(255,255,255,0.1)] text-slate-300 hover:bg-white/5 bg-transparent h-8 px-3 text-xs rounded transition-colors"
+                      className="border-border text-foreground hover:bg-muted bg-card h-8 px-3 text-xs rounded transition-colors shadow-sm"
                     >
                       {acc.isScanning ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
@@ -307,7 +311,7 @@ export default function Accounts() {
                       onClick={() => handleRemove(acc.id)}
                       size="icon"
                       variant="ghost"
-                      className="h-8 w-8 text-slate-500 hover:text-[#FF4560] hover:bg-[#FF4560]/10 rounded transition-colors"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -322,10 +326,10 @@ export default function Accounts() {
 
       {/* CONNECT AWS DIALOG MODAL */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-[440px] bg-[#0D1117] border border-[rgba(255,255,255,0.07)] text-slate-100 p-6 rounded-xl">
+        <DialogContent className="max-w-[440px] bg-card border border-border text-foreground p-6 rounded-xl shadow-lg font-sans">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold text-white tracking-tight">Connect AWS Account</DialogTitle>
-            <DialogDescription className="text-slate-400 text-xs mt-1">
+            <DialogTitle className="text-base font-bold text-foreground tracking-tight">Connect AWS Account</DialogTitle>
+            <DialogDescription className="text-muted-foreground text-xs mt-1">
               Synchronize audit records by mounting read-only IAM security roles.
             </DialogDescription>
           </DialogHeader>
@@ -333,51 +337,51 @@ export default function Accounts() {
           <form onSubmit={handleAddAccount} className="space-y-4 py-3">
             {/* Alias field */}
             <div className="space-y-1.5">
-              <label className="text-xs text-slate-400 font-medium font-sans">Account Alias</label>
+              <label className="text-xs text-muted-foreground font-medium font-sans">Account Alias</label>
               <Input 
                 type="text" 
                 placeholder="production-main" 
                 value={alias}
                 onChange={e => setAlias(e.target.value)}
                 required
-                className="bg-[#161B24] border border-[rgba(255,255,255,0.07)] text-slate-100 placeholder-slate-600 h-9 rounded text-xs focus:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF] transition-colors"
+                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-sans"
               />
             </div>
 
             {/* Access Key ID field */}
             <div className="space-y-1.5">
-              <label className="text-xs text-slate-400 font-medium font-sans">AWS Access Key ID</label>
+              <label className="text-xs text-muted-foreground font-medium font-sans">AWS Access Key ID</label>
               <Input 
                 type="password" 
                 placeholder="AKIAIOSFODNN7EXAMPLE" 
                 value={accessKey}
                 onChange={e => setAccessKey(e.target.value)}
                 required
-                className="bg-[#161B24] border border-[rgba(255,255,255,0.07)] text-slate-100 placeholder-slate-600 h-9 rounded text-xs font-mono focus:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF] transition-colors"
+                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs font-mono focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
 
             {/* Secret Access Key field */}
             <div className="space-y-1.5">
-              <label className="text-xs text-slate-400 font-medium font-sans">AWS Secret Access Key</label>
+              <label className="text-xs text-muted-foreground font-medium font-sans">AWS Secret Access Key</label>
               <Input 
                 type="password" 
                 placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" 
                 value={secretKey}
                 onChange={e => setSecretKey(e.target.value)}
                 required
-                className="bg-[#161B24] border border-[rgba(255,255,255,0.07)] text-slate-100 placeholder-slate-600 h-9 rounded text-xs font-mono focus:border-[#00E5FF] focus:ring-1 focus:ring-[#00E5FF] transition-colors"
+                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs font-mono focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
 
             {/* Region dropdown */}
             <div className="space-y-1.5">
-              <label className="text-xs text-slate-400 font-medium font-sans">Default Region</label>
+              <label className="text-xs text-muted-foreground font-medium font-sans">Default Region</label>
               <Select value={region} onValueChange={(val) => setRegion(val || "us-east-1")}>
-                <SelectTrigger className="w-full bg-[#161B24] border border-[rgba(255,255,255,0.07)] text-slate-300 h-9 text-xs rounded">
+                <SelectTrigger className="w-full bg-card border border-border text-foreground h-9 text-xs rounded font-sans">
                   <SelectValue placeholder="Region" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#161B24] border border-[rgba(255,255,255,0.07)] text-slate-300">
+                <SelectContent className="bg-card border border-border text-foreground font-sans">
                   <SelectItem value="us-east-1">us-east-1 (N. Virginia)</SelectItem>
                   <SelectItem value="us-west-2">us-west-2 (Oregon)</SelectItem>
                   <SelectItem value="eu-west-1">eu-west-1 (Ireland)</SelectItem>
@@ -388,7 +392,7 @@ export default function Accounts() {
             </div>
 
             {/* Encrypted credentials notice */}
-            <div className="flex items-center gap-2 p-2.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400">
+            <div className="flex items-center gap-2 p-2.5 rounded bg-orange-50 border border-orange-200 text-orange-600">
               <Lock className="w-3.5 h-3.5 shrink-0" />
               <p className="text-[10px] leading-normal font-sans font-medium">
                 Credentials are encrypted with AES-256-GCM before storage.
@@ -396,18 +400,18 @@ export default function Accounts() {
             </div>
 
             {/* Buttons */}
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[rgba(255,255,255,0.05)]">
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
               <Button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 variant="outline"
-                className="border-[rgba(255,255,255,0.1)] text-slate-400 hover:bg-white/5 bg-transparent h-9 text-xs rounded transition-colors"
+                className="border-border text-foreground hover:bg-muted bg-card h-9 text-xs rounded transition-colors font-semibold"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="bg-[#00E5FF] text-[#07080F] hover:bg-[#00E5FF]/90 h-9 px-4 font-bold text-xs rounded transition-colors"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 font-bold text-xs rounded transition-colors"
               >
                 Connect & Scan
               </Button>

@@ -15,6 +15,7 @@ const SERVICES = [
 
 export default function DeepScanPage() {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [accounts, setAccounts] = useState<any[]>([]);
   const [selectedAccount, setSelectedAccount] = useState("");
   const [selectedServices, setSelectedServices] = useState<string[]>(['S3', 'IAM', 'EC2']);
@@ -67,17 +68,17 @@ export default function DeepScanPage() {
   };
 
   return (
-    <div className="p-8 space-y-8 bg-[#07080F] min-h-screen text-slate-100 font-sans max-w-5xl mx-auto">
+    <div className="p-8 space-y-8 bg-background min-h-screen text-foreground font-sans max-w-5xl mx-auto">
       
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[rgba(255,255,255,0.05)] pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#FF4560]/10 flex items-center justify-center border border-[#FF4560]/20">
-            <Target className="w-5 h-5 text-[#FF4560]" />
+          <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center border border-destructive/20">
+            <Target className="w-5 h-5 text-destructive" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-white tracking-tight">Deep Scan</h1>
-            <p className="text-[13px] text-slate-400 mt-1">Run aggressive security audits to identify minor inconsistencies</p>
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Deep Scan</h1>
+            <p className="text-[13px] text-muted-foreground mt-1">Run aggressive security audits to identify minor inconsistencies</p>
           </div>
         </div>
       </div>
@@ -89,8 +90,8 @@ export default function DeepScanPage() {
           <div className="lg:col-span-2 space-y-6">
             
             {/* Account Selection */}
-            <Card className="bg-[#0D1117] border border-[rgba(255,255,255,0.07)] rounded-xl p-6">
-              <h2 className="text-sm font-semibold text-white mb-4">1. Select Target Environment</h2>
+            <Card className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <h2 className="text-sm font-bold text-foreground mb-4">1. Select Target Environment</h2>
               {accounts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {accounts.map(acc => (
@@ -99,31 +100,31 @@ export default function DeepScanPage() {
                       onClick={() => setSelectedAccount(acc.id)}
                       className={`p-3 rounded-lg border cursor-pointer transition-all ${
                         selectedAccount === acc.id 
-                          ? 'bg-[#00E5FF]/10 border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.1)]' 
-                          : 'bg-[#161B24] border-[rgba(255,255,255,0.05)] hover:border-[#00E5FF]/50 hover:bg-[#161B24]/80'
+                          ? 'bg-primary/5 border-primary shadow-sm' 
+                          : 'bg-card border-border hover:border-primary/50 hover:bg-muted/50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <Shield className={`w-4 h-4 ${selectedAccount === acc.id ? 'text-[#00E5FF]' : 'text-slate-500'}`} />
-                          <span className="text-sm font-medium text-white">{acc.alias}</span>
+                          <Shield className={`w-4 h-4 ${selectedAccount === acc.id ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span className="text-sm font-semibold text-foreground">{acc.alias}</span>
                         </div>
-                        {selectedAccount === acc.id && <CheckCircle2 className="w-4 h-4 text-[#00E5FF]" />}
+                        {selectedAccount === acc.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
                       </div>
-                      <p className="text-[10px] text-slate-500 font-mono mt-2 ml-6">{acc.id}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-2 ml-6">{acc.id}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-4 rounded-lg bg-[#161B24] border border-[rgba(255,255,255,0.05)] text-center text-sm text-slate-400">
+                <div className="p-4 rounded-lg bg-muted border border-border text-center text-sm text-muted-foreground">
                   No onboarded accounts found.
                 </div>
               )}
             </Card>
 
             {/* Service Selection */}
-            <Card className="bg-[#0D1117] border border-[rgba(255,255,255,0.07)] rounded-xl p-6">
-              <h2 className="text-sm font-semibold text-white mb-4">2. Select Services to Audit</h2>
+            <Card className="bg-card border border-border rounded-xl p-6 shadow-sm">
+              <h2 className="text-sm font-bold text-foreground mb-4">2. Select Services to Audit</h2>
               <div className="space-y-3">
                 {SERVICES.map(srv => {
                   const Icon = srv.icon;
@@ -134,21 +135,21 @@ export default function DeepScanPage() {
                       onClick={() => toggleService(srv.id)}
                       className={`flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-all ${
                         isSelected 
-                          ? 'bg-white/[0.02] border-[#00E5FF]/30' 
-                          : 'bg-[#161B24] border-[rgba(255,255,255,0.05)] hover:border-[rgba(255,255,255,0.1)]'
+                          ? 'bg-primary/5 border-primary/30' 
+                          : 'bg-card border-border hover:bg-muted/50'
                       }`}
                     >
                       <div className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                        isSelected ? 'bg-[#00E5FF] border-[#00E5FF]' : 'bg-transparent border-slate-600'
+                        isSelected ? 'bg-primary border-primary' : 'bg-transparent border-input'
                       }`}>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-[#07080F]" />}
+                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <Icon className={`w-4 h-4 ${isSelected ? 'text-[#00E5FF]' : 'text-slate-400'}`} />
-                          <span className={`text-sm font-medium ${isSelected ? 'text-white' : 'text-slate-300'}`}>{srv.name}</span>
+                          <Icon className={`w-4 h-4 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                          <span className={`text-sm font-semibold ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>{srv.name}</span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">{srv.desc}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{srv.desc}</p>
                       </div>
                     </div>
                   );
@@ -160,30 +161,30 @@ export default function DeepScanPage() {
 
           {/* ACTION COLUMN */}
           <div className="lg:col-span-1">
-            <Card className="bg-[#0D1117] border border-[#FF4560]/30 rounded-xl p-6 sticky top-6">
-              <div className="w-12 h-12 rounded-full bg-[#FF4560]/10 flex items-center justify-center mb-4 border border-[#FF4560]/20">
-                <Target className="w-6 h-6 text-[#FF4560]" />
+            <Card className="bg-card border border-destructive/30 rounded-xl p-6 sticky top-6 shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-4 border border-destructive/20">
+                <Target className="w-6 h-6 text-destructive" />
               </div>
-              <h3 className="text-lg font-bold text-white mb-2">Aggressive Audit</h3>
-              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+              <h3 className="text-lg font-bold text-foreground mb-2">Aggressive Audit</h3>
+              <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
                 Deep scans bypass standard compliance thresholds and enforce strict, highly aggressive security postures. This may result in a large volume of low-severity findings.
               </p>
               
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-500">Target:</span>
-                  <span className="text-[#00E5FF]">{selectedAccount || 'None'}</span>
+                  <span className="text-muted-foreground">Target:</span>
+                  <span className="text-primary font-semibold">{selectedAccount || 'None'}</span>
                 </div>
                 <div className="flex justify-between text-xs font-mono">
-                  <span className="text-slate-500">Services:</span>
-                  <span className="text-slate-300">{selectedServices.length} selected</span>
+                  <span className="text-muted-foreground">Services:</span>
+                  <span className="text-foreground font-semibold">{selectedServices.length} selected</span>
                 </div>
               </div>
 
               <Button 
                 onClick={initiateScan}
                 disabled={isScanning || !selectedAccount || selectedServices.length === 0}
-                className="w-full bg-[#FF4560] hover:bg-[#FF4560]/80 text-white font-semibold h-11 transition-all"
+                className="w-full bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold h-11 transition-all"
               >
                 {isScanning ? (
                   <>
@@ -203,24 +204,24 @@ export default function DeepScanPage() {
       ) : (
         /* SUCCESS STATE */
         <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in duration-500">
-          <div className="w-20 h-20 rounded-full bg-[#00E5FF]/10 flex items-center justify-center mb-6 border border-[#00E5FF]/20">
-            <CheckCircle2 className="w-10 h-10 text-[#00E5FF]" />
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 border border-primary/20">
+            <CheckCircle2 className="w-10 h-10 text-primary" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Deep Scan Complete</h2>
-          <p className="text-sm text-slate-400 mb-8 max-w-md text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Deep Scan Complete</h2>
+          <p className="text-sm text-muted-foreground mb-8 max-w-md text-center">
             The aggressive audit has successfully finished evaluating {selectedServices.length} services. The new findings have been recorded in your workspace.
           </p>
           <div className="flex gap-4">
             <Button 
               variant="outline"
               onClick={() => setScanComplete(false)}
-              className="border-[rgba(255,255,255,0.1)] text-slate-300 hover:text-white hover:bg-white/5"
+              className="border-border text-foreground hover:bg-muted bg-card font-semibold"
             >
               Run Another Scan
             </Button>
             <Button 
               onClick={() => router.push('/findings')}
-              className="bg-[#00E5FF] hover:bg-[#00E5FF]/80 text-[#07080F] font-semibold group"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold group"
             >
               View Findings
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
