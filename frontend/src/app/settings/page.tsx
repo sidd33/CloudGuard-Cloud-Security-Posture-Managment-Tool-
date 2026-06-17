@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Settings, 
   Save, 
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import api from '@/lib/api';
 
 export default function SettingsPage() {
   const [showSecret, setShowSecret] = useState(false);
@@ -24,18 +25,39 @@ export default function SettingsPage() {
   const [isSaved, setIsSaved] = useState(false);
 
   // Form states
-  const [cronExpression, setCronExpression] = useState("0 0 * * *");
+  const [cronExpression, setCronExpression] = useState("0 0 0 * * *");
   const [slackWebhook, setSlackWebhook] = useState("");
   const [jwtLifetime, setJwtLifetime] = useState("24h");
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    api.get('/settings').then((res) => {
+      const data = res.data;
+      if (data) {
+        setCronExpression(data.cronExpression || "0 0 0 * * *");
+        setSlackWebhook(data.slackWebhook || "");
+        setJwtLifetime(data.jwtLifetime || "24h");
+      }
+    }).catch(e => console.error("Failed to load settings:", e));
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    
+    try {
+      await api.post('/settings', {
+        cronExpression,
+        slackWebhook,
+        jwtLifetime,
+        symmetricAlgorithm: "AES-256-GCM"
+      });
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
-    }, 1200);
+    } catch (e) {
+      console.error("Failed to save settings:", e);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -73,10 +95,10 @@ export default function SettingsPage() {
                       <SelectValue placeholder="Interval" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-border text-foreground">
-                      <SelectItem value="0 * * * *">Every Hour</SelectItem>
-                      <SelectItem value="0 */12 * * *">Twice Daily (12 Hours)</SelectItem>
-                      <SelectItem value="0 0 * * *">Once Daily (Midnight)</SelectItem>
-                      <SelectItem value="0 0 * * 0">Weekly (Sundays)</SelectItem>
+                      <SelectItem value="0 0 * * * *">Every Hour</SelectItem>
+                      <SelectItem value="0 0 */12 * * *">Twice Daily (12 Hours)</SelectItem>
+                      <SelectItem value="0 0 0 * * *">Once Daily (Midnight)</SelectItem>
+                      <SelectItem value="0 0 0 * * 0">Weekly (Sundays)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -87,7 +109,7 @@ export default function SettingsPage() {
                     type="text" 
                     value={cronExpression} 
                     onChange={e => setCronExpression(e.target.value)}
-                    className="bg-background border border-border text-foreground h-9 rounded text-xs font-mono focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                    className="bg-background border border-border text-foreground h-9 rounded text-xs font-sans tracking-wide focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                   />
                 </div>
               </div>
@@ -110,7 +132,7 @@ export default function SettingsPage() {
                       type={showSecret ? "text" : "password"} 
                       value={slackWebhook}
                       onChange={e => setSlackWebhook(e.target.value)}
-                      className="bg-background border border-border text-foreground h-9 rounded text-xs pr-10 font-mono focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                      className="bg-background border border-border text-foreground h-9 rounded text-xs pr-10 font-sans tracking-wide focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                     />
                     <button
                       type="button"
@@ -158,7 +180,7 @@ export default function SettingsPage() {
                     type="text" 
                     value="AES-256-GCM" 
                     disabled 
-                    className="bg-muted border border-border text-muted-foreground h-9 rounded text-xs font-mono"
+                    className="bg-muted border border-border text-muted-foreground h-9 rounded text-xs font-sans tracking-wide"
                   />
                 </div>
               </div>

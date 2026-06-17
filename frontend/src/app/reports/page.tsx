@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { 
   FileText, 
   Download, 
@@ -9,6 +10,29 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import api from "@/lib/api";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+interface FindingBackendType {
+  id: string;
+  severity: string;
+  service: string;
+  resourceId: string;
+  title: string;
+  framework?: string[];
+  status: string;
+  timestamp?: string;
+  description?: string;
+  remediationSteps?: string;
+}
+
+interface ReportHistoryItem {
+  time: string;
+  type: string;
+  format: string;
+  status: string;
+}
 
 const complianceReports = [
   {
@@ -47,9 +71,89 @@ const complianceReports = [
 
 export default function Reports() {
   const reports = complianceReports;
+  const [findings, setFindings] = useState<FindingBackendType[]>([]);
+  const [reportHistory, setReportHistory] = useState<ReportHistoryItem[]>([
+    { time: "2 hours ago", type: "CIS AWS Foundations Benchmark", format: "PDF", status: "READY" },
+    { time: "1 day ago", type: "NIST 800-53 Compliance Audit", format: "JSON", status: "READY" },
+    { time: "3 days ago", type: "Executive Security Summary", format: "PDF", status: "READY" },
+  ]);
+
+  useEffect(() => {
+    const loadFindings = async () => {
+      try {
+        const res = await api.get('/findings');
+        setFindings(res.data || []);
+      } catch (err) {
+        console.warn("Backend findings API failed", err);
+      }
+    };
+    loadFindings();
+  }, []);
 
   const triggerDownload = (reportTitle: string, format: string) => {
-    alert(`Generating ${reportTitle} in ${format} format. Your download will start momentarily.`);
+    const keyword = reportTitle.includes("CIS") ? "CIS" 
+                  : reportTitle.includes("NIST") ? "NIST"
+                  : reportTitle.includes("SOC 2") ? "SOC 2"
+                  : reportTitle.includes("HIPAA") ? "HIPAA"
+                  : "";
+    
+    // Filter findings to match framework, or show all if none specifically matched
+    const filtered = keyword 
+      ? findings.filter(f => f.framework?.some(fw => fw.includes(keyword))) 
+      : findings;
+
+    if (format === "JSON") {
+      const jsonContent = JSON.stringify(filtered, null, 2);
+      const blob = new Blob([jsonContent], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${reportTitle.replace(/\s+/g, '_').toLowerCase()}_report.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else if (format === "PDF") {
+      const doc = new jsPDF();
+      
+      doc.setFontSize(18);
+      doc.text(reportTitle, 14, 22);
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+      doc.text(`Total findings: ${filtered.length}`, 14, 36);
+      
+      const tableData = filtered.map(f => [
+        f.severity || "LOW",
+        f.service || "Unknown",
+        f.title || "No Title",
+        f.status || "OPEN",
+        (f.resourceId || "").substring(0, 35) + ((f.resourceId || "").length > 35 ? "..." : "")
+      ]);
+
+      autoTable(doc, {
+        startY: 42,
+        head: [['Severity', 'Service', 'Finding', 'Status', 'Resource']],
+        body: tableData,
+        headStyles: { fillColor: [15, 23, 42] },
+        styles: { fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 60 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 60 }
+        }
+      });
+      
+      doc.save(`${reportTitle.replace(/\s+/g, '_').toLowerCase()}_report.pdf`);
+    }
+
+    setReportHistory(prev => [{
+      time: "Just now",
+      type: reportTitle,
+      format,
+      status: "READY"
+    }, ...prev]);
   };
 
   return (
@@ -128,11 +232,7 @@ export default function Reports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {[
-                { time: "2 hours ago", type: "CIS AWS Foundations Benchmark - production-main", format: "PDF", status: "READY" },
-                { time: "1 day ago", type: "NIST 800-53 Compliance Audit - staging-environment", format: "JSON", status: "READY" },
-                { time: "3 days ago", type: "Executive Security Summary - All Environments", format: "PDF", status: "READY" },
-              ].map((h, i) => (
+              {reportHistory.map((h, i) => (
                 <TableRow key={i} className="border-b border-border last:border-none hover:bg-muted/50 transition-colors">
                   <TableCell className="py-3 font-sans text-[11px] text-muted-foreground">{h.time}</TableCell>
                   <TableCell className="py-3 text-xs text-foreground font-bold">{h.type}</TableCell>
@@ -145,7 +245,7 @@ export default function Reports() {
                   </TableCell>
                   <TableCell className="py-3 text-right pr-6">
                     <Button 
-                      onClick={() => alert("Downloading existing report artifact...")}
+                      onClick={() => triggerDownload(h.type, h.format)}
                       size="icon-sm"
                       variant="ghost" 
                       className="h-7 w-7 text-primary hover:bg-primary/10 rounded"

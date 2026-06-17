@@ -430,21 +430,21 @@ export default function Findings() {
     switch(status) {
       case 'Resolved':
         return (
-          <div className="flex items-center gap-1.5 text-xs text-[#2a2e34] font-medium font-sans">
+          <div className="flex items-center gap-1.5 text-xs text-foreground font-medium font-sans">
             <span className="w-1.5 h-1.5 rounded-full bg-[#1f883d]" />
             Resolved
           </div>
         );
       case 'Suppressed':
         return (
-          <div className="flex items-center gap-1.5 text-xs text-[#687076] font-medium font-sans">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium font-sans">
             <span className="w-1.5 h-1.5 rounded-full bg-[#687076]" />
             Suppressed
           </div>
         );
       default:
         return (
-          <div className="flex items-center gap-1.5 text-xs text-[#2a2e34] font-medium font-sans">
+          <div className="flex items-center gap-1.5 text-xs text-foreground font-medium font-sans">
             <span className="w-1.5 h-1.5 rounded-full bg-[#d13212]" />
             Open
           </div>
@@ -582,7 +582,7 @@ export default function Findings() {
               <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[80px]">Service</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10">Resource ARN</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10">Finding</TableHead>
-              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[150px]">Framework</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[220px]">Framework</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[110px]">Status</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[100px]">Detected</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10 text-right w-[100px] pr-6">Actions</TableHead>

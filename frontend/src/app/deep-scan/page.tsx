@@ -111,7 +111,7 @@ export default function DeepScanPage() {
                         </div>
                         {selectedAccount === acc.id && <CheckCircle2 className="w-4 h-4 text-primary" />}
                       </div>
-                      <p className="text-[10px] text-muted-foreground font-mono mt-2 ml-6">{acc.id}</p>
+                      <p className="text-[10px] text-muted-foreground font-sans mt-2 ml-6 tracking-wide">{acc.id}</p>
                     </div>
                   ))}
                 </div>
@@ -171,11 +171,11 @@ export default function DeepScanPage() {
               </p>
               
               <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-xs font-mono">
+                <div className="flex justify-between text-xs font-sans tracking-wide">
                   <span className="text-muted-foreground">Target:</span>
                   <span className="text-primary font-semibold">{selectedAccount || 'None'}</span>
                 </div>
-                <div className="flex justify-between text-xs font-mono">
+                <div className="flex justify-between text-xs font-sans tracking-wide">
                   <span className="text-muted-foreground">Services:</span>
                   <span className="text-foreground font-semibold">{selectedServices.length} selected</span>
                 </div>

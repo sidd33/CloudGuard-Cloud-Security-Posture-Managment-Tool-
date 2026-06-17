@@ -104,7 +104,8 @@ public class EC2Scanner implements ScannerService {
         f.setStatus(Finding.Status.OPEN);
         f.setRemediationSteps(rem);
         f.setRegion(region);
-        f.setFramework(List.of("CIS_AWS_1.4"));
+        f.setFramework(List.of("CIS_AWS_1.4", "NIST_800_53"));
+        f.setControlIds(List.of("CIS-5.3", "NIST-CM-6"));
         return f;
     }
 }

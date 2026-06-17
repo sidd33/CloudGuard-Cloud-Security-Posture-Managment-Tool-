@@ -2,15 +2,21 @@ package com.cloudguard.service;
 
 import com.cloudguard.model.AwsAccount;
 import com.cloudguard.model.Finding;
+import com.cloudguard.model.GlobalSettings;
 import com.cloudguard.model.ScanResult;
 import com.cloudguard.model.ScanType;
 import com.cloudguard.repository.AwsAccountRepository;
 import com.cloudguard.repository.FindingRepository;
+import com.cloudguard.repository.GlobalSettingsRepository;
 import com.cloudguard.repository.ScanResultRepository;
 import com.cloudguard.service.scanner.ScannerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 
 import java.time.Instant;
@@ -29,6 +35,9 @@ public class ScanOrchestrator {
 
     @Autowired
     private ScanResultRepository scanResultRepository;
+
+    @Autowired
+    private GlobalSettingsRepository settingsRepository;
 
     @Autowired
     private FindingRepository findingRepository;
@@ -144,5 +153,34 @@ public class ScanOrchestrator {
         finalEvent.put("score", score);
         sseService.sendEvent(scanId, finalEvent);
         sseService.complete(scanId);
+
+        // Dispatch Webhook if configured
+        dispatchWebhook(account, criticalCount, highCount, allFindings);
+    }
+
+    private void dispatchWebhook(AwsAccount account, int criticalCount, int highCount, List<Finding> allFindings) {
+        if (criticalCount == 0 && highCount == 0) return;
+
+        GlobalSettings settings = settingsRepository.findById("global").orElse(null);
+        if (settings == null || settings.getSlackWebhook() == null || settings.getSlackWebhook().isBlank()) {
+            return; // No webhook configured
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            String message = String.format("🚨 *CloudGuard Scan Completed* 🚨\\nAccount: `%s`\\nFound *%d CRITICAL* and *%d HIGH* vulnerabilities.", 
+                    account.getId(), criticalCount, highCount);
+
+            Map<String, String> payload = new HashMap<>();
+            payload.put("text", message);
+
+            HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
+            restTemplate.postForEntity(settings.getSlackWebhook(), request, String.class);
+        } catch (Exception e) {
+            System.err.println("Failed to dispatch slack webhook: " + e.getMessage());
+        }
     }
 }

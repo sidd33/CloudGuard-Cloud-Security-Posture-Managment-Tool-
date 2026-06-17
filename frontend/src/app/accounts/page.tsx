@@ -205,7 +205,7 @@ export default function Accounts() {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[12px] font-bold text-foreground font-mono">{score}</span>
+          <span className="text-[12px] font-bold text-foreground font-sans">{score}</span>
         </div>
       </div>
     );
@@ -255,9 +255,9 @@ export default function Accounts() {
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-base font-bold text-foreground tracking-tight">{acc.alias}</h3>
-                    <p className="text-xs text-muted-foreground font-mono mt-1">ID: {acc.awsId}</p>
+                    <p className="text-xs text-muted-foreground font-sans mt-1">ID: {acc.awsId}</p>
                   </div>
-                  <Badge variant="outline" className="bg-muted border-border text-foreground text-[10px] font-mono rounded">
+                  <Badge variant="outline" className="bg-muted border-border text-foreground text-[10px] font-sans rounded">
                     {acc.region}
                   </Badge>
                 </div>
@@ -276,7 +276,7 @@ export default function Accounts() {
 
                   <div className="text-right">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Last Checked</p>
-                    <p className="text-xs text-foreground font-mono mt-0.5">{acc.lastScanned}</p>
+                    <p className="text-xs text-foreground font-sans mt-0.5">{acc.lastScanned}</p>
                   </div>
                 </div>
 
@@ -285,11 +285,11 @@ export default function Accounts() {
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[var(--status-critical)]" />
-                      <span className="text-muted-foreground font-mono">{acc.criticalFindings} Critical</span>
+                      <span className="text-muted-foreground font-sans">{acc.criticalFindings} Critical</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-[var(--status-high)]" />
-                      <span className="text-muted-foreground font-mono">{acc.totalFindings} Total</span>
+                      <span className="text-muted-foreground font-sans">{acc.totalFindings} Total</span>
                     </div>
                   </div>
 
@@ -357,7 +357,7 @@ export default function Accounts() {
                 value={accessKey}
                 onChange={e => setAccessKey(e.target.value)}
                 required
-                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs font-mono focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs font-sans focus:border-primary focus:ring-1 focus:ring-primary transition-colors tracking-wide"
               />
             </div>
 
@@ -370,7 +370,7 @@ export default function Accounts() {
                 value={secretKey}
                 onChange={e => setSecretKey(e.target.value)}
                 required
-                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs font-mono focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                className="bg-card border border-border text-foreground placeholder:text-muted-foreground h-9 rounded text-xs font-sans focus:border-primary focus:ring-1 focus:ring-primary transition-colors tracking-wide"
               />
             </div>
 

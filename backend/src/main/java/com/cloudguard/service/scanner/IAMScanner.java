@@ -12,6 +12,12 @@ import software.amazon.awssdk.services.iam.model.GetAccountSummaryResponse;
 import software.amazon.awssdk.services.iam.model.ListUsersResponse;
 import software.amazon.awssdk.services.iam.model.User;
 import software.amazon.awssdk.services.iam.model.GetAccountPasswordPolicyResponse;
+import software.amazon.awssdk.services.iam.model.ListRolesResponse;
+import software.amazon.awssdk.services.iam.model.Role;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -118,6 +124,73 @@ public class IAMScanner implements ScannerService {
                 log.warn("Could not list IAM users for account {}: {}", accountId, e.getMessage());
             }
 
+            // Roles list
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                ListRolesResponse rolesResp = iam.listRoles();
+                for (Role role : rolesResp.roles()) {
+                    // Skip service-linked roles and SSO managed roles
+                    if (role.path().startsWith("/aws-service-role/") || role.arn().contains("aws-reserved/sso.amazonaws.com/")) {
+                        continue;
+                    }
+                    try {
+                        String policyStr = URLDecoder.decode(role.assumeRolePolicyDocument(), StandardCharsets.UTF_8.name());
+                        
+                        try {
+                            java.nio.file.Files.write(
+                                java.nio.file.Paths.get("d:\\GIT-PROJ\\roles_debug.txt"), 
+                                (role.roleName() + ": " + policyStr + "\n").getBytes(), 
+                                java.nio.file.StandardOpenOption.CREATE, 
+                                java.nio.file.StandardOpenOption.APPEND
+                            );
+                        } catch (Exception e) {}
+
+                        JsonNode policyNode = mapper.readTree(policyStr);
+                        JsonNode statements = policyNode.path("Statement");
+                        
+                        java.util.List<JsonNode> stmtList = new java.util.ArrayList<>();
+                        if (statements.isArray()) {
+                            statements.forEach(stmtList::add);
+                        } else if (statements.isObject()) {
+                            stmtList.add(statements);
+                        }
+
+                        for (JsonNode stmt : stmtList) {
+                            if ("Allow".equals(stmt.path("Effect").asText())) {
+                                JsonNode principal = stmt.path("Principal");
+                                boolean isWildcard = false;
+                                if (principal.isTextual() && principal.asText().contains("*")) {
+                                    isWildcard = true;
+                                } else if (principal.has("AWS")) {
+                                    JsonNode awsPrincipal = principal.get("AWS");
+                                    if (awsPrincipal.isTextual() && awsPrincipal.asText().contains("*")) {
+                                        isWildcard = true;
+                                    } else if (awsPrincipal.isArray()) {
+                                        for (JsonNode p : awsPrincipal) {
+                                            if (p.asText().contains("*")) {
+                                                isWildcard = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (isWildcard) {
+                                    findings.add(createRoleFinding(accountId, scanId, role.roleName(), "global",
+                                            "IAM_OVERLY_PERMISSIVE_ROLE", "Overly Permissive IAM Role Trust Policy",
+                                            "IAM Role '" + role.roleName() + "' allows AssumeRole from wildcard accounts (*).",
+                                            Finding.Severity.CRITICAL, "To fix: Go to IAM Console -> Roles -> " + role.roleName() + " -> Trust relationships -> Edit trust policy to remove wildcard (*) and restrict Principal to specific trusted accounts."));
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.warn("Could not parse trust policy for role {}: {}", role.roleName(), e.getMessage());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not list IAM roles for account {}: {}", accountId, e.getMessage());
+            }
+
         } catch (Exception e) {
             log.error("Error executing IAM scan for account {}: {}", accountId, e.getMessage(), e);
         }
@@ -140,7 +213,29 @@ public class IAMScanner implements ScannerService {
         f.setStatus(Finding.Status.OPEN);
         f.setRemediationSteps(rem);
         f.setRegion(region);
-        f.setFramework(List.of("CIS_AWS_1.4"));
+        f.setFramework(List.of("CIS_AWS_1.4", "NIST_800_53"));
+        f.setControlIds(List.of("CIS-1.16", "NIST-AC-3"));
+        return f;
+    }
+
+    private Finding createRoleFinding(String accountId, String scanId, String roleName, String region,
+                                      String checkId, String title, String desc, Finding.Severity severity, String rem) {
+        Finding f = new Finding();
+        f.setAccountId(accountId);
+        f.setScanId(scanId);
+        f.setTimestamp(Instant.now());
+        f.setService("IAM");
+        f.setResourceId("arn:aws:iam::" + accountId + ":role/" + roleName);
+        f.setResourceName(roleName);
+        f.setCheckId(checkId);
+        f.setTitle(title);
+        f.setDescription(desc);
+        f.setSeverity(severity);
+        f.setStatus(Finding.Status.OPEN);
+        f.setRemediationSteps(rem);
+        f.setRegion(region);
+        f.setFramework(List.of("CIS_AWS_1.4", "NIST_800_53"));
+        f.setControlIds(List.of("CIS-1.4", "NIST-IA-5"));
         return f;
     }
 
@@ -160,7 +255,8 @@ public class IAMScanner implements ScannerService {
         f.setStatus(Finding.Status.OPEN);
         f.setRemediationSteps(rem);
         f.setRegion(region);
-        f.setFramework(List.of("CIS_AWS_1.4"));
+        f.setFramework(List.of("CIS_AWS_1.4", "NIST_800_53"));
+        f.setControlIds(List.of("CIS-1.14", "NIST-IA-2"));
         return f;
     }
 }

@@ -134,8 +134,8 @@ public class S3Scanner implements ScannerService {
         f.setStatus(Finding.Status.OPEN);
         f.setRemediationSteps(rem);
         f.setRegion(region);
-        f.setFramework(List.of("CIS_AWS_1.4")); // To be enriched
-        f.setControlIds(List.of()); // To be enriched
+        f.setFramework(List.of("CIS_AWS_1.4", "NIST_800_53")); // To be enriched
+        f.setControlIds(List.of("CIS-2.1.5", "NIST-AC-2"));
         return f;
     }
 }

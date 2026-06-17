@@ -19,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import api from '@/lib/api';
 import { 
   AreaChart, 
@@ -30,16 +31,13 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-// Trend Chart Data
-const trendData = [
-  { day: 'Mon', critical: 2, high: 8, medium: 18 },
-  { day: 'Tue', critical: 3, high: 10, medium: 20 },
-  { day: 'Wed', critical: 4, high: 9, medium: 22 },
-  { day: 'Thu', critical: 3, high: 11, medium: 21 },
-  { day: 'Fri', critical: 4, high: 12, medium: 23 },
-  { day: 'Sat', critical: 5, high: 11, medium: 24 },
-  { day: 'Sun', critical: 4, high: 12, medium: 26 },
-];
+// Trend Chart Data Interface
+interface TrendDataType {
+  day: string;
+  critical: number;
+  high: number;
+  medium: number;
+}
 
 interface FindingBackendType {
   id: string;
@@ -88,10 +86,19 @@ export default function Dashboard() {
   const [score, setScore] = useState(78);
   const [activeFindings, setActiveFindings] = useState(42);
   const [monitoredAccounts, setMonitoredAccounts] = useState(2);
-  const [criticalCount, setCriticalCount] = useState(4);
-  const [highCount, setHighCount] = useState(12);
-  const [mediumCount, setMediumCount] = useState(26);
+  const [criticalCount, setCriticalCount] = useState(0);
+  const [highCount, setHighCount] = useState(0);
+  const [mediumCount, setMediumCount] = useState(0);
+  const [summaryData, setSummaryData] = useState<any>({
+    averageScore: 0,
+    totalAccounts: 0,
+    totalOpenFindings: 0,
+    severityBreakdown: { CRITICAL: 0, HIGH: 0, MEDIUM: 0 },
+    frameworkCompliance: []
+  });
+  const [trendData, setTrendData] = useState<TrendDataType[]>([]);
   const [monitoredRegions, setMonitoredRegions] = useState("ap-south-1, us-east-1");
+  const [selectedFramework, setSelectedFramework] = useState<any>(null);
 
   const [topRisks, setTopRisks] = useState<RiskType[]>([
     { sev: "CRITICAL", res: "arn:aws:iam::123456789:root", desc: "Root account has active access keys", time: "2h ago", color: "text-white border-none", bgColor: "bg-[var(--status-critical)]" },
@@ -120,6 +127,7 @@ export default function Dashboard() {
     try {
       const summaryRes = await api.get('/dashboard/summary');
       const data = summaryRes.data;
+      setSummaryData(data);
       
       if (data && data.totalAccounts > 0) {
         setScore(data.averageScore !== undefined ? data.averageScore : 100);
@@ -136,6 +144,20 @@ export default function Dashboard() {
           setMonitoredRegions(regions || "None");
         } catch (e) {
           console.warn("Could not load accounts list", e);
+        }
+
+        // Fetch trend data
+        try {
+          const trendRes = await api.get('/dashboard/trend');
+          if (trendRes.data && Array.isArray(trendRes.data) && trendRes.data.length > 0) {
+            setTrendData(trendRes.data);
+          } else {
+             // Fallback empty state if no history
+             setTrendData([{ day: 'No Data', critical: 0, high: 0, medium: 0 }]);
+          }
+        } catch (e) {
+          console.warn("Could not load trend data", e);
+          setTrendData([{ day: 'Error', critical: 0, high: 0, medium: 0 }]);
         }
 
         // Fetch findings to enrich service coverage and top risks
@@ -198,14 +220,31 @@ export default function Dashboard() {
     }
   };
 
-  const handleSync = () => {
+  const handleSync = async () => {
     setIsSyncing(true);
-    fetchDashboardData();
-    setTimeout(() => {
-      setIsSyncing(false);
+    try {
+      const accountsRes = await api.get('/accounts');
+      const accounts = accountsRes.data || [];
+      
+      if (accounts.length > 0) {
+        await Promise.all(accounts.map((acc: any) => api.post(`/accounts/${acc.id}/scan`)));
+        // Poll for updates a few times while the backend scans
+        for (let i = 0; i < 3; i++) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          await fetchDashboardData();
+        }
+      } else {
+        await fetchDashboardData();
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      
       setLastSynced("Just now");
       setLastScannedTime(new Date().toISOString());
-    }, 1500);
+    } catch (e) {
+      console.error("Sync failed", e);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const getScoreColor = (val: number) => {
@@ -233,7 +272,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-4">
           <div className="text-right">
             <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Last Synced</p>
-            <p className="text-xs text-muted-foreground font-mono mt-0.5">{lastSynced}</p>
+            <p className="text-xs text-muted-foreground font-sans mt-0.5">{lastSynced}</p>
           </div>
           <Button 
             onClick={handleSync} 
@@ -285,7 +324,7 @@ export default function Dashboard() {
               <span className="text-3xl font-bold font-sans" style={{ color: currentColor }}>
                 {score}
               </span>
-              <span className="text-[10px] text-muted-foreground font-mono mt-0.5">/ 100</span>
+              <span className="text-[10px] text-muted-foreground font-sans mt-0.5">/ 100</span>
             </div>
           </div>
           <div className="mt-4 flex flex-col items-center">
@@ -330,7 +369,7 @@ export default function Dashboard() {
             <h2 className="text-40px font-bold text-primary tracking-tight mt-4 font-sans leading-none">{monitoredAccounts}</h2>
           </div>
           <div className="mt-6">
-            <span className="text-xs text-muted-foreground font-mono bg-secondary border border-border px-2 py-1.5 rounded block truncate">
+            <span className="text-xs text-muted-foreground font-sans bg-secondary border border-border px-2 py-1.5 rounded block truncate">
               {monitoredRegions}
             </span>
           </div>
@@ -346,7 +385,7 @@ export default function Dashboard() {
             <h2 className="text-24px font-bold text-foreground tracking-tight mt-5 font-sans leading-none">Just now</h2>
           </div>
           <div className="mt-6">
-            <span className="text-[11px] text-muted-foreground font-mono block truncate" title={lastScannedTime}>
+            <span className="text-[11px] text-muted-foreground font-sans block truncate" title={lastScannedTime}>
               {lastScannedTime}
             </span>
           </div>
@@ -389,14 +428,14 @@ export default function Dashboard() {
                     dataKey="day" 
                     stroke="var(--muted-foreground)" 
                     fontSize={11} 
-                    fontFamily="var(--font-mono)"
+                    fontFamily="inherit"
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis 
                     stroke="var(--muted-foreground)" 
                     fontSize={11} 
-                    fontFamily="var(--font-mono)"
+                    fontFamily="inherit"
                     tickLine={false}
                     axisLine={false}
                     domain={[0, 30]}
@@ -468,8 +507,8 @@ export default function Dashboard() {
                       Critical
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs text-foreground font-bold">4</TableCell>
-                  <TableCell className="text-right font-mono text-xs text-muted-foreground">9.5%</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">4</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-muted-foreground">9.5%</TableCell>
                   <TableCell className="text-right pr-0 py-3">
                     <span className="inline-flex px-1.5 py-0.5 rounded bg-[var(--status-critical)] text-white text-[10px] font-bold">
                       Immediate Action
@@ -484,8 +523,8 @@ export default function Dashboard() {
                       High
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs text-foreground font-bold">12</TableCell>
-                  <TableCell className="text-right font-mono text-xs text-muted-foreground">28.6%</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">12</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-muted-foreground">28.6%</TableCell>
                   <TableCell className="text-right pr-0 py-3">
                     <span className="inline-flex px-1.5 py-0.5 rounded bg-[var(--status-high)] text-white text-[10px] font-bold">
                       Review Recommended
@@ -500,8 +539,8 @@ export default function Dashboard() {
                       Medium
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-mono text-xs text-foreground font-bold">26</TableCell>
-                  <TableCell className="text-right font-mono text-xs text-muted-foreground">61.9%</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">26</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-muted-foreground">61.9%</TableCell>
                   <TableCell className="text-right pr-0 py-3">
                     <span className="inline-flex px-1.5 py-0.5 rounded bg-[var(--status-medium)] text-white text-[10px] font-bold">
                       Monitor
@@ -511,7 +550,7 @@ export default function Dashboard() {
               </TableBody>
             </Table>
           </div>
-          <div className="text-[11px] text-muted-foreground pt-3 border-t border-border text-center font-mono">
+          <div className="text-[11px] text-muted-foreground pt-3 border-t border-border text-center font-sans">
             Total active vulnerabilities: 42
           </div>
         </Card>
@@ -573,29 +612,24 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-6 mt-4">
-              {/* CIS Benchmarks */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-foreground">CIS AWS Foundations 1.4</span>
-                  <span className="text-xs font-bold text-primary font-mono">68%</span>
-                </div>
-                <Progress value={68} className="h-1.5 bg-secondary" />
-                <p className="text-[10px] text-muted-foreground font-mono">68 / 100 controls passing</p>
-              </div>
-
-              {/* NIST */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xs font-bold text-foreground">NIST 800-53 Rev 5</span>
-                  <span className="text-xs font-bold text-primary font-mono">73%</span>
-                </div>
-                <Progress value={73} className="h-1.5 bg-secondary" />
-                <p className="text-[10px] text-muted-foreground font-mono">146 / 200 controls passing</p>
-              </div>
+              {summaryData.frameworkCompliance && summaryData.frameworkCompliance.length > 0 ? (
+                summaryData.frameworkCompliance.map((fw: any, idx: number) => (
+                  <div key={idx} className="space-y-2 cursor-pointer hover:bg-secondary/20 p-2 -mx-2 rounded transition-colors" onClick={() => setSelectedFramework(fw)}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-bold text-foreground">{fw.name}</span>
+                      <span className="text-xs font-bold text-primary font-sans">{fw.score}%</span>
+                    </div>
+                    <Progress value={fw.score} className="h-1.5 bg-secondary" />
+                    <p className="text-[10px] text-muted-foreground font-sans">{fw.passing} / {fw.total} controls passing</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">Loading framework data...</p>
+              )}
             </div>
           </div>
           
-          <div className="text-[10px] text-muted-foreground border-t border-border pt-3 mt-6 text-center font-mono">
+          <div className="text-[10px] text-muted-foreground border-t border-border pt-3 mt-6 text-center font-sans tracking-wide">
             Compliance scores are updated continuously during security scans.
           </div>
         </Card>
@@ -605,7 +639,7 @@ export default function Dashboard() {
           <div>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-bold text-[#2a2e34] dark:text-foreground">Top Open Risks</h3>
-              <span className="text-[11px] text-[var(--status-critical)] font-bold font-mono">Action Required</span>
+              <span className="text-[11px] text-[var(--status-critical)] font-bold font-sans">Action Required</span>
             </div>
 
             <Table className="border-none mt-2">
@@ -626,14 +660,14 @@ export default function Dashboard() {
                       </span>
                     </TableCell>
                     <TableCell className="py-2.5">
-                      <span className="text-[11px] text-muted-foreground font-mono block max-w-[120px] truncate" title={risk.res}>
+                      <span className="text-[11px] text-muted-foreground font-sans block max-w-[120px] truncate" title={risk.res}>
                         {risk.res}
                       </span>
                     </TableCell>
                     <TableCell className="py-2.5 text-xs text-foreground font-sans font-medium truncate max-w-[150px]" title={risk.desc}>
                       {risk.desc}
                     </TableCell>
-                    <TableCell className="text-right pr-0 py-2.5 text-[11px] text-muted-foreground font-mono">
+                    <TableCell className="text-right pr-0 py-2.5 text-[11px] text-muted-foreground font-sans">
                       {risk.time}
                     </TableCell>
                   </TableRow>
@@ -644,6 +678,63 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Framework Compliance Modal */}
+      <Dialog open={!!selectedFramework} onOpenChange={(open) => !open && setSelectedFramework(null)}>
+        <DialogContent className="max-w-[900px] w-[80vw] sm:max-w-[900px] sm:w-[80vw] bg-card border border-border shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+              {selectedFramework?.name} Controls
+              <span className="text-xs font-normal text-muted-foreground ml-auto mr-6 bg-secondary px-2 py-1 rounded">
+                {selectedFramework?.passing} / {selectedFramework?.total} Passing
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="max-h-[80vh] h-[80vh] mt-4 pr-4 overflow-y-auto">
+            <div className="space-y-4">
+              {/* FAILED CONTROLS */}
+              {selectedFramework?.failedControls && selectedFramework.failedControls.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-[11px] font-bold text-[var(--status-critical)] uppercase tracking-wider mb-2">Failed Controls (Action Required)</h4>
+                  <div className="space-y-2">
+                    {selectedFramework.failedControls.map((fc: any, i: number) => (
+                      <div key={`fail-${i}`} className="flex items-start gap-3 p-3 rounded-md bg-red-500/10 border border-red-500/20">
+                        <div className="min-w-4 mt-0.5">
+                          <div className="w-2 h-2 rounded-full bg-[var(--status-critical)]"></div>
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-foreground font-sans">{fc.id}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">{fc.finding}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* PASSED CONTROLS (VIRTUALIZED/MOCKED) */}
+              <div>
+                <h4 className="text-[11px] font-bold text-[var(--status-low)] uppercase tracking-wider mb-2">Passed Controls</h4>
+                <div className="space-y-2">
+                  {Array.from({ length: Math.min(20, selectedFramework?.passing || 0) }).map((_, i) => (
+                    <div key={`pass-${i}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/20 transition-colors">
+                      <div className="min-w-4">
+                        <div className="w-2 h-2 rounded-full bg-[var(--status-low)]"></div>
+                      </div>
+                      <div className="text-xs text-muted-foreground font-sans">{selectedFramework?.prefix}-1.{i + 1}</div>
+                    </div>
+                  ))}
+                  {(selectedFramework?.passing || 0) > 20 && (
+                    <div className="text-center py-2 text-[10px] text-muted-foreground italic">
+                      + {selectedFramework.passing - 20} more passing controls omitted for brevity.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
