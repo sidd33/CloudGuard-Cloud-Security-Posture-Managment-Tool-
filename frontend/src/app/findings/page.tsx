@@ -573,15 +573,11 @@ export default function Findings() {
                   <TableCell className="py-3 text-right pr-6" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1.5">
                       <Tooltip>
-                        <TooltipTrigger render={
-                          <Button 
-                            onClick={(e) => handleSuppress(finding.id, e)}
-                            disabled={finding.status === "Suppressed"}
-                            size="icon-sm"
-                            variant="ghost"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground bg-transparent hover:bg-muted disabled:opacity-30 rounded"
-                          />
-                        }>
+                        <TooltipTrigger 
+                          onClick={(e) => handleSuppress(finding.id, e)}
+                          disabled={finding.status === "Suppressed"}
+                          className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-foreground bg-transparent hover:bg-muted disabled:opacity-30 rounded"
+                        >
                           <EyeOff className="w-3.5 h-3.5" />
                         </TooltipTrigger>
                         <TooltipContent className="bg-card border border-border text-foreground text-xs font-sans shadow-sm">
@@ -589,15 +585,11 @@ export default function Findings() {
                         </TooltipContent>
                       </Tooltip>
                       <Tooltip>
-                        <TooltipTrigger render={
-                          <Button 
-                            onClick={(e) => handleResolve(finding.id, e)}
-                            disabled={finding.status === "Resolved"}
-                            size="icon-sm"
-                            variant="ghost"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground bg-transparent hover:bg-muted disabled:opacity-30 rounded"
-                          />
-                        }>
+                        <TooltipTrigger 
+                          onClick={(e) => handleResolve(finding.id, e)}
+                          disabled={finding.status === "Resolved"}
+                          className="h-7 w-7 flex items-center justify-center text-muted-foreground hover:text-foreground bg-transparent hover:bg-muted disabled:opacity-30 rounded"
+                        >
                           <CheckCircle className="w-3.5 h-3.5" />
                         </TooltipTrigger>
                         <TooltipContent className="bg-card border border-border text-foreground text-xs font-sans shadow-sm">
