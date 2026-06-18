@@ -227,7 +227,6 @@ export default function ScanHistory() {
       } else {
         setHistory(initialHistory);
       }
-      }
     } catch (err) {
       console.warn("Backend scans API failed, using demo data.", err);
       setHistory(initialHistory);
