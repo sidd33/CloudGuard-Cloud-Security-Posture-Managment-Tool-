@@ -172,6 +172,13 @@ export default function Findings() {
       if (serviceParam) {
         setServiceFilter(serviceParam.toUpperCase());
       }
+      
+      const cache = sessionStorage.getItem('findingsCache');
+      if (cache) {
+        try {
+          setFindings(JSON.parse(cache));
+        } catch(e) {}
+      }
     }
     loadFindings();
   }, []);
@@ -205,6 +212,10 @@ export default function Findings() {
             remediation: f.remediationSteps ? f.remediationSteps.split("\n") : ["Go to AWS Console.", "Locate the affected resource.", "Remediate according to security guidelines."]
           };
         });
+        
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('findingsCache', JSON.stringify(mapped));
+        }
         setFindings(mapped);
       } else {
         setFindings(initialFindings);

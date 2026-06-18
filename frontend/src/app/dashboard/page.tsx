@@ -120,6 +120,26 @@ export default function Dashboard() {
   useEffect(() => {
     setMounted(true);
     setLastScannedTime(new Date().toISOString());
+    
+    // Load cache instantly to prevent network flash
+    const cache = typeof window !== 'undefined' ? sessionStorage.getItem('dashboardCache') : null;
+    if (cache) {
+      try {
+        const data = JSON.parse(cache);
+        setSummaryData(data);
+        if (data && data.totalAccounts > 0) {
+          setScore(data.averageScore !== undefined ? data.averageScore : 100);
+          setActiveFindings(data.totalOpenFindings || 0);
+          setMonitoredAccounts(data.totalAccounts || 0);
+          setCriticalCount(data.severityBreakdown?.CRITICAL || 0);
+          setHighCount(data.severityBreakdown?.HIGH || 0);
+          setMediumCount(data.severityBreakdown?.MEDIUM || 0);
+        }
+      } catch (e) {
+        console.error("Cache read failed", e);
+      }
+    }
+
     fetchDashboardData();
   }, []);
 
@@ -127,6 +147,12 @@ export default function Dashboard() {
     try {
       const summaryRes = await api.get('/dashboard/summary');
       const data = summaryRes.data;
+      
+      // Save to cache for next time
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('dashboardCache', JSON.stringify(data));
+      }
+      
       setSummaryData(data);
       
       if (data && data.totalAccounts > 0) {

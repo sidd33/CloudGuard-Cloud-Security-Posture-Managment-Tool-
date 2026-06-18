@@ -174,6 +174,13 @@ export default function ScanHistory() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    // Load cache instantly
+    const cache = typeof window !== 'undefined' ? sessionStorage.getItem('scanHistoryCache') : null;
+    if (cache) {
+      try {
+        setHistory(JSON.parse(cache));
+      } catch(e) {}
+    }
     loadScanHistory();
   }, []);
 
@@ -211,9 +218,15 @@ export default function ScanHistory() {
             error: scan.status === "FAILED" ? "Scan execution encountered scanner failures" : null
           };
         });
+        
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('scanHistoryCache', JSON.stringify(mapped));
+        }
+        
         setHistory(mapped);
       } else {
         setHistory(initialHistory);
+      }
       }
     } catch (err) {
       console.warn("Backend scans API failed, using demo data.", err);

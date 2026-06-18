@@ -54,6 +54,16 @@ export default function Accounts() {
   const [region, setRegion] = useState("us-east-1");
 
   useEffect(() => {
+    // Load cache instantly to prevent network flash
+    const cache = typeof window !== 'undefined' ? sessionStorage.getItem('accountsCache') : null;
+    if (cache) {
+      try {
+        setAccounts(JSON.parse(cache));
+      } catch (e) {
+        console.error("Cache read failed", e);
+      }
+    }
+    
     loadAccounts();
   }, []);
 
@@ -86,6 +96,12 @@ export default function Accounts() {
             isScanning: false
           };
         });
+        
+        // Save to cache for next time
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('accountsCache', JSON.stringify(mapped));
+        }
+        
         setAccounts(mapped);
       } else {
         setAccounts([]);
