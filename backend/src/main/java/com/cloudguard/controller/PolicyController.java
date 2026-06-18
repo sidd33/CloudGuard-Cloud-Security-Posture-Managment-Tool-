@@ -87,7 +87,7 @@ public class PolicyController {
     public ResponseEntity<?> testPolicy(@PathVariable String id, @RequestParam(defaultValue = "ap-south-1") String region, @RequestParam String accountId) {
         return repository.findById(id).map(policy -> {
             try {
-                com.cloudguard.model.AwsAccount account = accountRepository.findByAccountId(accountId).orElseThrow(() -> new RuntimeException("Account not found: " + accountId));
+                com.cloudguard.model.AwsAccount account = accountRepository.findById(accountId).orElseThrow(() -> new RuntimeException("Account not found: " + accountId));
                 software.amazon.awssdk.auth.credentials.AwsCredentialsProvider creds = accountService.getCredentialsProvider(account);
                 Map<String, Object> input = null;
                 switch(policy.getResourceType()) {
