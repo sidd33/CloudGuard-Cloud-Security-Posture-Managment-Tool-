@@ -1,6 +1,7 @@
 package com.cloudguard.service.opa;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +40,13 @@ public class OpaClient {
     public JsonNode evaluatePolicy(String policyPath, Object resourceInput) {
         String url = opaUrl + "/v1/data/" + policyPath;
         Map<String, Object> requestBody = Collections.singletonMap("input", resourceInput);
-        ResponseEntity<JsonNode> response = restTemplate.postForEntity(url, requestBody, JsonNode.class);
-        return response.getBody();
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, requestBody, String.class);
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readTree(response.getBody());
+        } catch (Exception e) {
+            System.err.println("OPA Evaluation Error: " + e.getMessage());
+            throw new RuntimeException("OPA Evaluation Error: " + e.getMessage(), e);
+        }
     }
 }
