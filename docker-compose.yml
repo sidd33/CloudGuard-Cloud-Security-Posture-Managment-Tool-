@@ -1,22 +1,31 @@
 version: '3.8'
-
 services:
+  mongodb:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db]
+
+  opa:
+    image: openpolicyagent/opa:latest
+    command: run --server --addr :8181
+    ports: ["8181:8181"]
+
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
+    build: ./backend
+    ports: ["8080:8080"]
     environment:
-      - MONGODB_URI=${MONGODB_URI}
-      - CLOUDGUARD_ENCRYPTION_KEY=${CLOUDGUARD_ENCRYPTION_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-    depends_on:
-      - frontend
+      MONGODB_URI: mongodb://mongodb:27017/cloudguard
+      OPA_URL: http://opa:8181
+      CLOUDGUARD_ENCRYPTION_KEY: ${CLOUDGUARD_ENCRYPTION_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on: [mongodb, opa]
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
+    build: ./frontend
+    ports: ["3000:3000"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    depends_on: [backend]
+
+volumes:
+  mongo_data:

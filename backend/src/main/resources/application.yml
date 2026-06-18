@@ -10,3 +10,5 @@ server:
 cloudguard:
   encryption-key: ${CLOUDGUARD_ENCRYPTION_KEY:12345678901234567890123456789012}
   jwt-secret: ${JWT_SECRET:supersecretjwtkeythatneedstobelongerthan32bytes1234}
+  opa:
+    url: ${OPA_URL:http://localhost:8181}

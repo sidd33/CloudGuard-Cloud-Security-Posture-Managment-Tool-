@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.cloudguard.model.ScanResult;
 import com.cloudguard.repository.ScanResultRepository;
+import com.cloudguard.repository.CustomPolicyRepository;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +33,9 @@ public class DashboardController {
 
     @Autowired
     private ScanResultRepository scanResultRepository;
+
+    @Autowired
+    private CustomPolicyRepository customPolicyRepository;
 
     @GetMapping("/trend")
     public List<Map<String, Object>> getTrend() {
@@ -160,6 +164,32 @@ public class DashboardController {
         nistMap.put("total", nistTotal);
         nistMap.put("failedControls", failedNistControls);
         compliance.add(nistMap);
+
+        // Custom Policies compliance
+        long customOpen = allFindings.stream().filter(f -> f.getStatus() == Finding.Status.OPEN && f.getFramework() != null && f.getFramework().stream().anyMatch(fw -> fw.toUpperCase().contains("CUSTOM"))).count();
+        long customTotalRaw = customPolicyRepository.count();
+        int customTotal = customTotalRaw > 0 ? (int) customTotalRaw * accounts.size() : 10; // Number of policies * accounts, fallback to 10
+        long customPassing = Math.max(0, customTotal - customOpen);
+
+        List<Map<String, String>> failedCustomControls = allFindings.stream()
+            .filter(f -> f.getStatus() == Finding.Status.OPEN && f.getFramework() != null && f.getFramework().stream().anyMatch(fw -> fw.toUpperCase().contains("CUSTOM")))
+            .map(f -> {
+                Map<String, String> m = new HashMap<>();
+                m.put("id", f.getCheckId() != null ? f.getCheckId() : "CUSTOM");
+                m.put("finding", f.getTitle());
+                return m;
+            })
+            .distinct()
+            .toList();
+
+        Map<String, Object> customMap = new HashMap<>();
+        customMap.put("name", "Custom Policies");
+        customMap.put("prefix", "CUSTOM");
+        customMap.put("score", Math.round(((double) customPassing / customTotal) * 100));
+        customMap.put("passing", customPassing);
+        customMap.put("total", customTotal);
+        customMap.put("failedControls", failedCustomControls);
+        compliance.add(customMap);
 
         Map<String, Object> summary = new HashMap<>();
         summary.put("averageScore", averageScore);

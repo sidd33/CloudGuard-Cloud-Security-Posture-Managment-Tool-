@@ -74,7 +74,8 @@ public class ScanOrchestrator {
         List<CompletableFuture<List<Finding>>> futures = new ArrayList<>();
 
         for (ScannerService scanner : scanners) {
-            if (targetServices != null && !targetServices.isEmpty() && !targetServices.contains(scanner.getCategory().toUpperCase())) {
+            if (targetServices != null && !targetServices.isEmpty()
+                    && !targetServices.contains(scanner.getCategory().toUpperCase())) {
                 continue; // Skip scanners not requested
             }
             CompletableFuture<List<Finding>> future = CompletableFuture.supplyAsync(() -> {
@@ -110,8 +111,8 @@ public class ScanOrchestrator {
         List<Finding> oldFindings = findingRepository.findByAccountId(accountId);
         if (targetServices != null && !targetServices.isEmpty()) {
             oldFindings = oldFindings.stream()
-                .filter(f -> targetServices.contains(f.getService().toUpperCase()))
-                .collect(Collectors.toList());
+                    .filter(f -> targetServices.contains(f.getService().toUpperCase()))
+                    .collect(Collectors.toList());
         }
         findingRepository.deleteAll(oldFindings);
 
@@ -130,8 +131,10 @@ public class ScanOrchestrator {
         for (Finding f : allFindings) {
             bySeverity.merge(f.getSeverity().name(), 1, Integer::sum);
             byService.merge(f.getService(), 1, Integer::sum);
-            if (f.getSeverity() == Finding.Severity.CRITICAL) criticalCount++;
-            if (f.getSeverity() == Finding.Severity.HIGH) highCount++;
+            if (f.getSeverity() == Finding.Severity.CRITICAL)
+                criticalCount++;
+            if (f.getSeverity() == Finding.Severity.HIGH)
+                highCount++;
         }
 
         scanResult.setFindingsBySeverity(bySeverity);
@@ -159,7 +162,8 @@ public class ScanOrchestrator {
     }
 
     private void dispatchWebhook(AwsAccount account, int criticalCount, int highCount, List<Finding> allFindings) {
-        if (criticalCount == 0 && highCount == 0) return;
+        if (criticalCount == 0 && highCount == 0)
+            return;
 
         GlobalSettings settings = settingsRepository.findById("global").orElse(null);
         if (settings == null || settings.getSlackWebhook() == null || settings.getSlackWebhook().isBlank()) {
@@ -171,7 +175,8 @@ public class ScanOrchestrator {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            String message = String.format("🚨 *CloudGuard Scan Completed* 🚨\\nAccount: `%s`\\nFound *%d CRITICAL* and *%d HIGH* vulnerabilities.", 
+            String message = String.format(
+                    "🚨 *CloudGuard Scan Completed* 🚨\\nAccount: `%s`\\nFound *%d CRITICAL* and *%d HIGH* vulnerabilities.",
                     account.getId(), criticalCount, highCount);
 
             Map<String, String> payload = new HashMap<>();

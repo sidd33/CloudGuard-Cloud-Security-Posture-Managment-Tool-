@@ -29,7 +29,7 @@ public class Finding {
     private Severity severity;
     
     public enum Status {
-        OPEN, SUPPRESSED, RESOLVED
+        OPEN, SUPPRESSED, RESOLVED, REMEDIATION_FAILED
     }
     private Status status;
     

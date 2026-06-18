@@ -613,16 +613,20 @@ export default function Dashboard() {
 
             <div className="space-y-6 mt-4">
               {summaryData.frameworkCompliance && summaryData.frameworkCompliance.length > 0 ? (
-                summaryData.frameworkCompliance.map((fw: any, idx: number) => (
+                summaryData.frameworkCompliance.map((fw: any, idx: number) => {
+                  const isCustom = fw.name.toLowerCase().includes("custom");
+                  const progressColor = isCustom ? "bg-purple-500" : "bg-primary";
+                  const textColor = isCustom ? "text-purple-500" : "text-primary";
+                  return (
                   <div key={idx} className="space-y-2 cursor-pointer hover:bg-secondary/20 p-2 -mx-2 rounded transition-colors" onClick={() => setSelectedFramework(fw)}>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-bold text-foreground">{fw.name}</span>
-                      <span className="text-xs font-bold text-primary font-sans">{fw.score}%</span>
+                      <span className={`text-xs font-bold font-sans ${textColor}`}>{fw.score}%</span>
                     </div>
-                    <Progress value={fw.score} className="h-1.5 bg-secondary" />
+                    <Progress value={fw.score} className="h-1.5 bg-secondary" indicatorClassName={progressColor} />
                     <p className="text-[10px] text-muted-foreground font-sans">{fw.passing} / {fw.total} controls passing</p>
                   </div>
-                ))
+                )})
               ) : (
                 <p className="text-xs text-muted-foreground">Loading framework data...</p>
               )}

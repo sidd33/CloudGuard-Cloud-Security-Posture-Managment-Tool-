@@ -7,7 +7,8 @@ import {
   Download, 
   EyeOff, 
   CheckCircle, 
-  SlidersHorizontal
+  SlidersHorizontal,
+  Wand2
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,10 +19,13 @@ import {
   SheetContent
 } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import api from '@/lib/api';
+import { AUTO_REMEDIABLE, MANUAL_ONLY } from '@/lib/constants';
 
 interface FindingType {
   id: string;
+  checkId: string;
   severity: string;
   service: string;
   resourceId: string;
@@ -35,6 +39,7 @@ interface FindingType {
 
 interface FindingBackendType {
   id: string;
+  checkId: string;
   severity: string;
   service: string;
   resourceId: string;
@@ -47,9 +52,10 @@ interface FindingBackendType {
 }
 
 // Initial realistic findings data
-const initialFindings = [
+const initialFindings: FindingType[] = [
   {
     id: "find-1",
+    checkId: "IAM_003",
     severity: "CRITICAL",
     service: "IAM",
     resourceId: "arn:aws:iam::123456789:root",
@@ -57,7 +63,7 @@ const initialFindings = [
     framework: "CIS 1.1, NIST AC-2",
     status: "Open",
     detected: "2h ago",
-    desc: "The root user account has access keys configured. Root access keys allow unrestricted access to all resources in your AWS account and cannot be limited by IAM policies. Best practice dictates that the root account should not have active access keys.",
+    desc: "The root user account has access keys configured. Root access keys allow unrestricted access to all resources in your AWS account and cannot be limited by IAM policies.",
     remediation: [
       "Log in to the AWS Management Console as the root user.",
       "Navigate to the IAM Dashboard.",
@@ -68,6 +74,7 @@ const initialFindings = [
   },
   {
     id: "find-2",
+    checkId: "S3_001",
     severity: "CRITICAL",
     service: "S3",
     resourceId: "arn:aws:s3:::prod-backups",
@@ -86,9 +93,10 @@ const initialFindings = [
   },
   {
     id: "find-3",
+    checkId: "IAM_002",
     severity: "HIGH",
     service: "IAM",
-    resourceId: "arn:aws:iam::123456789:user/deploy",
+    resourceId: "arn:aws:iam::123456789:user/deploy|AKIAIOSFODNN7EXAMPLE",
     title: "Access keys not rotated (127 days)",
     framework: "CIS 1.4, NIST IA-2",
     status: "Open",
@@ -103,6 +111,7 @@ const initialFindings = [
   },
   {
     id: "find-4",
+    checkId: "EC2_001",
     severity: "HIGH",
     service: "EC2",
     resourceId: "sg-0a1b2c3d",
@@ -121,6 +130,7 @@ const initialFindings = [
   },
   {
     id: "find-5",
+    checkId: "S3_003",
     severity: "MEDIUM",
     service: "S3",
     resourceId: "arn:aws:s3:::logs-bucket",
@@ -136,190 +146,26 @@ const initialFindings = [
       "Click 'Edit' and select 'Enable'.",
       "Save changes."
     ]
-  },
-  {
-    id: "find-6",
-    severity: "HIGH",
-    service: "CloudTrail",
-    resourceId: "arn:aws:cloudtrail:us-east-1:123456789:trail/default",
-    title: "CloudTrail log file validation disabled",
-    framework: "CIS 3.2, NIST AU-10",
-    status: "Open",
-    detected: "4h ago",
-    desc: "Log file integrity validation is disabled on trail 'default'. Validating log files ensures that cloud trail logs have not been modified, deleted, or tampered with after storage.",
-    remediation: [
-      "Go to CloudTrail console.",
-      "Click on the default trail.",
-      "Edit the configuration.",
-      "Check 'Enable log file validation' under the logging settings.",
-      "Save changes."
-    ]
-  },
-  {
-    id: "find-7",
-    severity: "CRITICAL",
-    service: "GuardDuty",
-    resourceId: "arn:aws:guardduty:us-east-1:123456789:detector/gd-det",
-    title: "GuardDuty is not enabled",
-    framework: "CIS 4.1, NIST SI-4",
-    status: "Open",
-    detected: "5h ago",
-    desc: "Amazon GuardDuty is disabled in this region. GuardDuty is a continuous security monitoring service that analyzes API logs, DNS logs, and flow logs to detect threat activity.",
-    remediation: [
-      "Go to the Amazon GuardDuty service console.",
-      "Click on 'Get Started' and click 'Enable GuardDuty'."
-    ]
-  },
-  {
-    id: "find-8",
-    severity: "LOW",
-    service: "Config",
-    resourceId: "arn:aws:config:us-east-1:123456789:config-recorder",
-    title: "AWS Config is disabled",
-    framework: "CIS 3.3, NIST CM-8",
-    status: "Open",
-    detected: "6h ago",
-    desc: "AWS Config recording is disabled. AWS Config tracks configuration changes over time, which is critical for compliance audits and incident investigation.",
-    remediation: [
-      "Navigate to AWS Config console.",
-      "Select 'Settings'.",
-      "Under Recording Group, turn recording on for all resources.",
-      "Configure an S3 bucket to receive history files and configure an IAM role for recording."
-    ]
-  },
-  {
-    id: "find-9",
-    severity: "HIGH",
-    service: "IAM",
-    resourceId: "arn:aws:iam::123456789:mfa",
-    title: "MFA not enabled for admin users",
-    framework: "CIS 1.2, NIST IA-2",
-    status: "Open",
-    detected: "8h ago",
-    desc: "One or more administrative users do not have Multi-Factor Authentication enabled. MFA adds an essential layer of security on top of static passwords.",
-    remediation: [
-      "Navigate to IAM user page.",
-      "Identify administrator accounts with MFA status set to 'Disabled'.",
-      "Require administrative accounts to configure an MFA device before performing API calls."
-    ]
-  },
-  {
-    id: "find-10",
-    severity: "MEDIUM",
-    service: "EC2",
-    resourceId: "arn:aws:ec2:us-east-1:123456789:instance/i-0c1a2b3c",
-    title: "EC2 instance has public IP and open ports",
-    framework: "CIS 5.2, NIST SC-7",
-    status: "Open",
-    detected: "10h ago",
-    desc: "The EC2 instance i-0c1a2b3c is launched in a public subnet, has a public IP address, and security groups that expose multiple ports.",
-    remediation: [
-      "Determine if the instance requires public internet accessibility.",
-      "If not, associate it with a private subnet and remove the public IP association.",
-      "Restrict security group ingress rules to minimum requirements."
-    ]
-  },
-  {
-    id: "find-11",
-    severity: "LOW",
-    service: "S3",
-    resourceId: "arn:aws:s3:::public-assets-bucket",
-    title: "S3 Bucket default encryption disabled",
-    framework: "CIS 2.3, NIST SC-28",
-    status: "Suppressed",
-    detected: "1d ago",
-    desc: "Default server-side encryption is disabled on public-assets-bucket. Objects uploaded without explicit encryption parameters will be stored in plaintext on disk.",
-    remediation: [
-      "Navigate to S3 > public-assets-bucket.",
-      "Click 'Properties'.",
-      "Under 'Default encryption', click Edit.",
-      "Select Enable and choose SSE-S3 or SSE-KMS.",
-      "Save changes."
-    ]
-  },
-  {
-    id: "find-12",
-    severity: "MEDIUM",
-    service: "RDS",
-    resourceId: "arn:aws:rds:us-east-1:123456789:db/prod-db",
-    title: "RDS Auto Minor Version Upgrade disabled",
-    framework: "CIS 2.6, NIST SI-2",
-    status: "Open",
-    detected: "1d ago",
-    desc: "Auto minor version upgrade is disabled for RDS instance prod-db. Enabling this ensures database engine updates are automatically applied, resolving security patches in minor releases.",
-    remediation: [
-      "Navigate to RDS > Databases.",
-      "Select 'prod-db' and click Modify.",
-      "Under Maintenance, enable 'Auto minor version upgrade'.",
-      "Save changes and choose Apply Immediately."
-    ]
-  },
-  {
-    id: "find-13",
-    severity: "HIGH",
-    service: "RDS",
-    resourceId: "arn:aws:rds:us-east-1:123456789:db/prod-db",
-    title: "RDS DB instance is not encrypted at rest",
-    framework: "CIS 2.7, NIST SC-28",
-    status: "Open",
-    detected: "2d ago",
-    desc: "The RDS database instance prod-db is stored on unencrypted storage volume. Encryption at rest secures the underlying data, snapshots, and backups.",
-    remediation: [
-      "Encryption cannot be enabled on an existing DB instance.",
-      "Create a snapshot of the database.",
-      "Copy the snapshot and select 'Enable Encryption' using an AWS KMS key.",
-      "Restore the database from the encrypted snapshot copy.",
-      "Update backend environment variables to point to the new encrypted DB."
-    ]
-  },
-  {
-    id: "find-14",
-    severity: "MEDIUM",
-    service: "KMS",
-    resourceId: "arn:aws:kms:us-east-1:123456789:key/key-id",
-    title: "KMS key rotation disabled",
-    framework: "CIS 3.8, NIST SC-12",
-    status: "Open",
-    detected: "2d ago",
-    desc: "Key rotation is disabled for customer managed KMS key. Rotating cryptographic keys yearly reduces the volume of data encrypted under a single key.",
-    remediation: [
-      "Navigate to KMS console.",
-      "Select Customer managed keys.",
-      "Click on key-id.",
-      "Select Key rotation tab.",
-      "Check 'Automatically rotate this KMS key every year'.",
-      "Save changes."
-    ]
-  },
-  {
-    id: "find-15",
-    severity: "LOW",
-    service: "IAM",
-    resourceId: "arn:aws:iam::123456789:policy/overly-permissive",
-    title: "IAM policy contains wildcards",
-    framework: "CIS 1.16, NIST AC-3",
-    status: "Resolved",
-    detected: "3d ago",
-    desc: "The IAM policy contains a wildcard (*) action combined with wildcard (*) resource, allowing full administration power to anyone attached. E.g. iam:*, s3:*.",
-    remediation: [
-      "Review the IAM policy.",
-      "Restrict operations to exact actions needed.",
-      "Specify the exact resource ARNs instead of using '*' wildcard in the resource field."
-    ]
   }
 ];
 
 export default function Findings() {
-  const [findings, setFindings] = useState(initialFindings);
+  const [findings, setFindings] = useState<FindingType[]>(initialFindings);
   const [searchTerm, setSearchTerm] = useState("");
   const [severityFilter, setSeverityFilter] = useState("ALL");
   const [serviceFilter, setServiceFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [frameworkFilter, setFrameworkFilter] = useState("ALL");
   const [selectedFinding, setSelectedFinding] = useState<FindingType | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  
+  const [remediateFinding, setRemediateFinding] = useState<FindingType | null>(null);
+  const [isRemediating, setIsRemediating] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [remediationLog, setRemediationLog] = useState<any[]>([]);
+  const [toastMsg, setToastMsg] = useState<{title: string, error?: boolean} | null>(null);
 
   useEffect(() => {
-    // Check for service filter from dashboard click
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const serviceParam = params.get('service');
@@ -330,24 +176,30 @@ export default function Findings() {
     loadFindings();
   }, []);
 
+  useEffect(() => {
+    if (toastMsg) {
+      const timer = setTimeout(() => setToastMsg(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMsg]);
+
   const loadFindings = async () => {
     try {
-      // Check if there are any real accounts onboarded
       const accountsRes = await api.get('/accounts');
       const hasAccounts = accountsRes.data && accountsRes.data.length > 0;
 
       const res = await api.get('/findings');
       if (hasAccounts) {
-        // Use real findings list (even if empty)
         const mapped = (res.data || []).map((f: FindingBackendType) => {
           return {
             id: f.id,
+            checkId: f.checkId || "UNKNOWN",
             severity: f.severity,
             service: f.service,
             resourceId: f.resourceId,
             title: f.title,
             framework: f.framework && f.framework.length > 0 ? f.framework.join(", ") : "CIS 1.1",
-            status: f.status === "OPEN" ? "Open" : f.status === "RESOLVED" ? "Resolved" : "Suppressed",
+            status: f.status === "OPEN" ? "Open" : f.status === "RESOLVED" ? "Resolved" : f.status === "REMEDIATION_FAILED" ? "REMEDIATION_FAILED" : "Suppressed",
             detected: f.timestamp ? new Date(f.timestamp).toLocaleDateString() : "Just now",
             desc: f.description || f.title,
             remediation: f.remediationSteps ? f.remediationSteps.split("\n") : ["Go to AWS Console.", "Locate the affected resource.", "Remediate according to security guidelines."]
@@ -355,7 +207,6 @@ export default function Findings() {
         });
         setFindings(mapped);
       } else {
-        // Fallback to preview mock findings
         setFindings(initialFindings);
       }
     } catch (err) {
@@ -364,7 +215,6 @@ export default function Findings() {
     }
   };
 
-  // Actions handlers
   const handleResolve = async (id: string, event?: React.MouseEvent) => {
     if (event) event.stopPropagation();
     try {
@@ -399,7 +249,43 @@ export default function Findings() {
     }
   };
 
-  // Filter logic
+  const handleAutoFixClick = (finding: FindingType, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRemediateFinding(finding);
+    setDialogOpen(true);
+  };
+
+  const confirmRemediation = async () => {
+    if (!remediateFinding) return;
+    setIsRemediating(true);
+    try {
+      if (remediateFinding.id.startsWith("find-")) {
+        await new Promise(r => setTimeout(r, 1000));
+        setFindings(prev => prev.map(f => f.id === remediateFinding.id ? { ...f, status: "Resolved" } : f));
+        setToastMsg({ title: `Remediated: ${remediateFinding.title}` });
+      } else {
+        const res = await api.post(`/findings/${remediateFinding.id}/remediate`);
+        if (res.data.success) {
+          setFindings(prev => prev.map(f => f.id === remediateFinding.id ? { ...f, status: "Resolved" } : f));
+          setToastMsg({ title: `Remediated: ${remediateFinding.title}` });
+        } else {
+          setFindings(prev => prev.map(f => f.id === remediateFinding.id ? { ...f, status: "REMEDIATION_FAILED" } : f));
+          setToastMsg({ title: `Failed: ${res.data.message}`, error: true });
+        }
+      }
+    } catch (err: any) {
+      setToastMsg({ title: "Remediation API Error", error: true });
+      setFindings(prev => prev.map(f => f.id === remediateFinding.id ? { ...f, status: "REMEDIATION_FAILED" } : f));
+    } finally {
+      setIsRemediating(false);
+      setDialogOpen(false);
+      if (selectedFinding?.id === remediateFinding?.id) {
+         setSelectedFinding(findings.find(f => f.id === remediateFinding?.id) || null);
+      }
+      setRemediateFinding(null);
+    }
+  };
+
   const filteredFindings = findings.filter(f => {
     const matchesSearch = 
       f.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -408,9 +294,10 @@ export default function Findings() {
 
     const matchesSeverity = severityFilter === "ALL" || f.severity === severityFilter;
     const matchesService = serviceFilter === "ALL" || f.service === serviceFilter;
-    const matchesStatus = statusFilter === "ALL" || f.status === statusFilter;
+    const matchesStatus = statusFilter === "ALL" || f.status === statusFilter || (statusFilter === "Open" && f.status === "REMEDIATION_FAILED");
+    const matchesFramework = frameworkFilter === "ALL" || f.framework.includes(frameworkFilter);
 
-    return matchesSearch && matchesSeverity && matchesService && matchesStatus;
+    return matchesSearch && matchesSeverity && matchesService && matchesStatus && matchesFramework;
   });
 
   const getSeverityBadge = (sev: string) => {
@@ -442,6 +329,13 @@ export default function Findings() {
             Suppressed
           </div>
         );
+      case 'REMEDIATION_FAILED':
+        return (
+          <div className="flex items-center gap-1.5 text-xs text-red-500 font-medium font-sans">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+            Failed
+          </div>
+        );
       default:
         return (
           <div className="flex items-center gap-1.5 text-xs text-foreground font-medium font-sans">
@@ -465,14 +359,29 @@ export default function Findings() {
     document.body.removeChild(link);
   };
 
-  const openDetails = (finding: FindingType) => {
+  const openDetails = async (finding: FindingType) => {
     setSelectedFinding(finding);
     setPanelOpen(true);
+    setRemediationLog([]);
+    if (finding.status === "Resolved" && !finding.id.startsWith("find-")) {
+      try {
+        const res = await api.get(`/findings/${finding.id}/remediation-log`);
+        setRemediationLog(res.data || []);
+      } catch (e) {}
+    } else if (finding.status === "Resolved" && finding.id.startsWith("find-")) {
+       setRemediationLog([{ actionTaken: "Mocked action from initial data", executedAt: new Date().toISOString() }]);
+    }
   };
 
   return (
-    <div className="p-8 space-y-6 bg-background min-h-screen text-foreground font-sans">
+    <div className="p-8 space-y-6 bg-background min-h-screen text-foreground font-sans relative">
       
+      {toastMsg && (
+        <div className={`fixed top-4 right-4 z-[100] px-4 py-3 rounded shadow-lg border ${toastMsg.error ? 'bg-red-50 text-red-900 border-red-200' : 'bg-green-50 text-green-900 border-green-200'} font-sans text-sm font-medium animate-in slide-in-from-top-2`}>
+          {toastMsg.title}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border pb-6">
         <div>
@@ -510,7 +419,6 @@ export default function Findings() {
             <span>Filters:</span>
           </div>
 
-          {/* Severity Select */}
           <Select value={severityFilter} onValueChange={(val) => setSeverityFilter(val || "ALL")}>
             <SelectTrigger className="w-[140px] bg-card border border-border text-foreground h-8 text-xs rounded font-sans">
               <SelectValue placeholder="Severity" />
@@ -524,7 +432,6 @@ export default function Findings() {
             </SelectContent>
           </Select>
 
-          {/* Service Select */}
           <Select value={serviceFilter} onValueChange={(val) => setServiceFilter(val || "ALL")}>
             <SelectTrigger className="w-[140px] bg-card border border-border text-foreground h-8 text-xs rounded font-sans">
               <SelectValue placeholder="Service" />
@@ -534,15 +441,9 @@ export default function Findings() {
               <SelectItem value="IAM">IAM</SelectItem>
               <SelectItem value="S3">S3</SelectItem>
               <SelectItem value="EC2">EC2</SelectItem>
-              <SelectItem value="CloudTrail">CloudTrail</SelectItem>
-              <SelectItem value="GuardDuty">GuardDuty</SelectItem>
-              <SelectItem value="Config">Config</SelectItem>
-              <SelectItem value="RDS">RDS</SelectItem>
-              <SelectItem value="KMS">KMS</SelectItem>
             </SelectContent>
           </Select>
 
-          {/* Status Select */}
           <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val || "ALL")}>
             <SelectTrigger className="w-[140px] bg-card border border-border text-foreground h-8 text-xs rounded font-sans">
               <SelectValue placeholder="Status" />
@@ -555,14 +456,26 @@ export default function Findings() {
             </SelectContent>
           </Select>
 
-          {/* Reset Filters button */}
-          {(searchTerm !== "" || severityFilter !== "ALL" || serviceFilter !== "ALL" || statusFilter !== "ALL") && (
+          <Select value={frameworkFilter} onValueChange={(val) => setFrameworkFilter(val || "ALL")}>
+            <SelectTrigger className="w-[140px] bg-card border border-border text-foreground h-8 text-xs rounded font-sans">
+              <SelectValue placeholder="Framework" />
+            </SelectTrigger>
+            <SelectContent className="bg-card border border-border text-foreground font-sans">
+              <SelectItem value="ALL">All Frameworks</SelectItem>
+              <SelectItem value="CIS">CIS</SelectItem>
+              <SelectItem value="NIST">NIST</SelectItem>
+              <SelectItem value="CUSTOM">Custom Policy</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {(searchTerm !== "" || severityFilter !== "ALL" || serviceFilter !== "ALL" || statusFilter !== "ALL" || frameworkFilter !== "ALL") && (
             <Button
               onClick={() => {
                 setSearchTerm("");
                 setSeverityFilter("ALL");
                 setServiceFilter("ALL");
                 setStatusFilter("ALL");
+                setFrameworkFilter("ALL");
               }}
               variant="ghost"
               className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground font-sans"
@@ -582,10 +495,10 @@ export default function Findings() {
               <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[80px]">Service</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10">Resource ARN</TableHead>
               <TableHead className="text-muted-foreground font-semibold text-xs h-10">Finding</TableHead>
-              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[220px]">Framework</TableHead>
-              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[110px]">Status</TableHead>
-              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[100px]">Detected</TableHead>
-              <TableHead className="text-muted-foreground font-semibold text-xs h-10 text-right w-[100px] pr-6">Actions</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[200px]">Framework</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[100px]">Status</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 w-[120px]">Remediate</TableHead>
+              <TableHead className="text-muted-foreground font-semibold text-xs h-10 text-right w-[90px] pr-6">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -623,15 +536,40 @@ export default function Findings() {
                   <TableCell className="py-3 text-xs text-foreground font-medium font-sans">{finding.title}</TableCell>
                   <TableCell className="py-3">
                     <div className="flex flex-wrap gap-1">
-                      {finding.framework.split(',').map((fw, index) => (
-                        <span key={index} className="inline-flex px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] font-sans font-medium border border-border">
-                          {fw.trim()}
-                        </span>
-                      ))}
+                      {finding.framework.split(',').map((fw, index) => {
+                        const isCustom = fw.trim().toUpperCase() === "CUSTOM" || fw.trim().toUpperCase().includes("CUSTOM");
+                        return (
+                          <span key={index} className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-sans font-medium border ${isCustom ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                            {fw.trim()}
+                          </span>
+                        );
+                      })}
                     </div>
                   </TableCell>
                   <TableCell className="py-3">{getStatusIndicator(finding.status)}</TableCell>
-                  <TableCell className="py-3 text-[11px] text-muted-foreground font-sans font-medium">{finding.detected}</TableCell>
+                  <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
+                    {finding.status === "Resolved" && (
+                      <span className="text-xs text-[#1f883d] font-semibold flex items-center gap-1">Fixed ✓</span>
+                    )}
+                    {(finding.status === "Open" || finding.status === "REMEDIATION_FAILED") && AUTO_REMEDIABLE.includes(finding.checkId) && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={(e) => handleAutoFixClick(finding, e)}
+                        className={finding.status === "REMEDIATION_FAILED" ? "border-red-500 text-red-500 hover:bg-red-500/10 h-7 text-xs px-2" : "border-cyan-500 text-cyan-600 bg-cyan-500/10 hover:bg-cyan-500/20 h-7 text-xs px-2 gap-1.5"}
+                      >
+                        {finding.status === "REMEDIATION_FAILED" ? "Retry" : <><Wand2 className="w-3 h-3" /> Auto-Fix</>}
+                      </Button>
+                    )}
+                    {finding.status === "Open" && MANUAL_ONLY.includes(finding.checkId) && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="sm" variant="ghost" disabled className="h-7 text-xs px-2 cursor-not-allowed">Manual Only</Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Root access keys cannot be deleted programmatically.</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </TableCell>
                   <TableCell className="py-3 text-right pr-6" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1.5">
                       <Tooltip>
@@ -695,6 +633,14 @@ export default function Findings() {
                   </h2>
                 </div>
 
+                {/* Auto Remediate Button Inside Panel */}
+                {['Open', 'REMEDIATION_FAILED'].includes(selectedFinding.status) && AUTO_REMEDIABLE.includes(selectedFinding.checkId) && (
+                  <Button onClick={(e) => handleAutoFixClick(selectedFinding, e)} className="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs">
+                    <Wand2 className="w-4 h-4 mr-2"/>
+                    Auto-Remediate
+                  </Button>
+                )}
+
                 {/* Resource ARN */}
                 <div className="space-y-1.5 p-3 rounded bg-muted border border-border">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold font-sans block">Affected Resource</span>
@@ -735,6 +681,21 @@ export default function Findings() {
                   </div>
                 </div>
 
+                {/* Audit Trail */}
+                {selectedFinding.status === "Resolved" && remediationLog.length > 0 && (
+                  <div className="space-y-2 mt-4 border-t border-border pt-4">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider font-sans">Audit Trail</h3>
+                    {remediationLog.map((log, idx) => (
+                      <div key={idx} className="bg-muted p-3 rounded border border-border">
+                        <p className="text-[11px] text-muted-foreground mb-1">Fixed at {new Date(log.executedAt).toLocaleString()}</p>
+                        <pre className="text-[12px] font-mono text-foreground whitespace-pre-wrap">
+                          {log.actionTaken}
+                        </pre>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
               </div>
 
               {/* Action Buttons */}
@@ -768,6 +729,36 @@ export default function Findings() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* REMEDIATION DIALOG */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Remediation</DialogTitle>
+            <DialogDescription>
+              This will modify your AWS resource immediately.
+            </DialogDescription>
+          </DialogHeader>
+          {remediateFinding && (
+            <div className="py-4 space-y-4">
+              <div>
+                <p className="text-sm font-semibold">{remediateFinding.title}</p>
+                <p className="text-xs text-muted-foreground mt-1 font-mono break-all">{remediateFinding.resourceId}</p>
+              </div>
+              <div className="bg-muted p-3 rounded text-sm text-foreground">
+                <p className="font-semibold text-xs uppercase mb-1">Action to be taken:</p>
+                <p className="text-xs">{remediateFinding.remediation[0] || "Execute automated security fix."}</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={isRemediating}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmRemediation} disabled={isRemediating}>
+              {isRemediating ? "Fixing..." : "Fix Now"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

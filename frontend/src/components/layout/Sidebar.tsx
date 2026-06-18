@@ -11,6 +11,7 @@ import {
   Settings, 
   Shield,
   Target,
+  FileCode,
   Sun,
   Moon
 } from 'lucide-react';
@@ -29,6 +30,7 @@ export default function Sidebar() {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Findings', href: '/findings', icon: ShieldAlert },
     { name: 'Accounts', href: '/accounts', icon: Cloud },
+    { name: 'Policies', href: '/policies', icon: FileCode },
     { name: 'Deep Scan', href: '/deep-scan', icon: Target },
     { name: 'Scan History', href: '/scan-history', icon: History },
     { name: 'Reports', href: '/reports', icon: FileText },
