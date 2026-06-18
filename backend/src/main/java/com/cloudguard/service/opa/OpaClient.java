@@ -18,7 +18,7 @@ public class OpaClient {
     private final RestTemplate restTemplate;
     private final String opaUrl;
 
-    public OpaClient(@Value("${cloudguard.opa.url:http://localhost:8181}") String opaUrl) {
+    public OpaClient(@Value("${opa.url:https://cloudguard-opa.onrender.com}") String opaUrl) {
         this.restTemplate = new RestTemplate();
         this.opaUrl = opaUrl;
     }

@@ -77,18 +77,30 @@ public class PolicyController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @Autowired
+    private com.cloudguard.service.AccountService accountService;
+
+    @Autowired
+    private com.cloudguard.repository.AwsAccountRepository accountRepository;
+
     @PostMapping("/{id}/test")
-    public ResponseEntity<JsonNode> testPolicy(@PathVariable String id, @RequestParam(defaultValue = "ap-south-1") String region) {
+    public ResponseEntity<?> testPolicy(@PathVariable String id, @RequestParam(defaultValue = "ap-south-1") String region, @RequestParam String accountId) {
         return repository.findById(id).map(policy -> {
-            software.amazon.awssdk.auth.credentials.AwsCredentialsProvider creds = DefaultCredentialsProvider.create();
-            Map<String, Object> input = null;
-            switch(policy.getResourceType()) {
-                case S3: input = stateCollector.collectS3State(creds, region); break;
-                case IAM: input = stateCollector.collectIamState(creds); break;
-                case EC2: input = stateCollector.collectEc2State(creds, region); break;
+            try {
+                com.cloudguard.model.AwsAccount account = accountRepository.findById(accountId).orElseThrow();
+                software.amazon.awssdk.auth.credentials.AwsCredentialsProvider creds = accountService.getCredentialsProvider(account);
+                Map<String, Object> input = null;
+                switch(policy.getResourceType()) {
+                    case S3: input = stateCollector.collectS3State(creds, region); break;
+                    case EC2: input = stateCollector.collectEc2State(creds, region); break;
+                    case IAM: input = stateCollector.collectIamState(creds); break;
+                }
+                if (input == null) return ResponseEntity.badRequest().body(Map.of("error", "Unsupported resource type"));
+                JsonNode res = opaClient.evaluatePolicy(policy.getPolicyId(), input);
+                return ResponseEntity.ok(res);
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
             }
-            JsonNode result = opaClient.evaluatePolicy(policy.getPolicyId(), input);
-            return ResponseEntity.ok(result);
         }).orElse(ResponseEntity.notFound().build());
     }
 
