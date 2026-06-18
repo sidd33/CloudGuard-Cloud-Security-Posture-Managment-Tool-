@@ -65,7 +65,13 @@ export default function PoliciesPage() {
       setPolicies(polRes.data);
       setTemplates(tempRes.data);
     } catch (error) {
-      console.error("Failed to fetch data", error);
+      console.error("Failed to fetch data. Falling back to Demo Mode templates.", error);
+      // Demo Mode Fallback Templates
+      setTemplates([
+        { name: "Template 1 — No public S3 buckets", content: "package cloudguard.custom.no_public_s3\n\nviolation[msg] {\n  bucket := input.buckets[_]\n  bucket.public_access_blocked == false\n  msg := {\n    \"resource_arn\": bucket.arn,\n    \"title\": \"S3 bucket has public access enabled\",\n    \"description\": sprintf(\"Bucket '%v' does not have Block Public Access enabled\", [bucket.name]),\n    \"severity\": \"CRITICAL\"\n  }\n}" },
+        { name: "Template 2 — Require MFA for all IAM users", content: "package cloudguard.custom.require_mfa\n\nviolation[msg] {\n  user := input.users[_]\n  user.mfa_enabled == false\n  msg := {\n    \"resource_arn\": user.arn,\n    \"title\": \"IAM user does not have MFA enabled\",\n    \"description\": sprintf(\"User '%v' has console access without MFA\", [user.username]),\n    \"severity\": \"HIGH\"\n  }\n}" },
+        { name: "Template 3 — Enforce Department tag on EC2", content: "package cloudguard.custom.require_department_tag\n\nviolation[msg] {\n  instance := input.instances[_]\n  not instance.tags[\"Department\"]\n  msg := {\n    \"resource_arn\": instance.arn,\n    \"title\": \"EC2 instance missing required Department tag\",\n    \"severity\": \"MEDIUM\"\n  }\n}" }
+      ]);
     } finally {
       setLoading(false);
     }

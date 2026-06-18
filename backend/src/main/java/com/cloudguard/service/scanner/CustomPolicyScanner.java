@@ -23,7 +23,8 @@ public class CustomPolicyScanner implements ScannerService {
     private final OpaClient opaClient;
     private final ResourceStateCollector stateCollector;
 
-    public CustomPolicyScanner(CustomPolicyRepository repository, OpaClient opaClient, ResourceStateCollector stateCollector) {
+    public CustomPolicyScanner(CustomPolicyRepository repository, OpaClient opaClient,
+            ResourceStateCollector stateCollector) {
         this.repository = repository;
         this.opaClient = opaClient;
         this.stateCollector = stateCollector;
@@ -35,7 +36,8 @@ public class CustomPolicyScanner implements ScannerService {
     }
 
     @Override
-    public List<Finding> scan(AwsCredentialsProvider creds, String region, String accountId, String scanId, ScanType scanType) {
+    public List<Finding> scan(AwsCredentialsProvider creds, String region, String accountId, String scanId,
+            ScanType scanType) {
         List<Finding> findings = new ArrayList<>();
         List<CustomPolicy> activePolicies = repository.findByEnabledTrue();
 
@@ -51,15 +53,18 @@ public class CustomPolicyScanner implements ScannerService {
             Map<String, Object> inputState = null;
             switch (policy.getResourceType()) {
                 case S3:
-                    if (s3State == null) s3State = stateCollector.collectS3State(creds, region);
+                    if (s3State == null)
+                        s3State = stateCollector.collectS3State(creds, region);
                     inputState = s3State;
                     break;
                 case IAM:
-                    if (iamState == null) iamState = stateCollector.collectIamState(creds);
+                    if (iamState == null)
+                        iamState = stateCollector.collectIamState(creds);
                     inputState = iamState;
                     break;
                 case EC2:
-                    if (ec2State == null) ec2State = stateCollector.collectEc2State(creds, region);
+                    if (ec2State == null)
+                        ec2State = stateCollector.collectEc2State(creds, region);
                     inputState = ec2State;
                     break;
             }
@@ -80,20 +85,24 @@ public class CustomPolicyScanner implements ScannerService {
                                 f.setResourceName(f.getResourceId());
                                 f.setCheckId(policy.getControlId());
                                 f.setTitle(v.has("title") ? v.get("title").asText() : policy.getName());
-                                f.setDescription(v.has("description") ? v.get("description").asText() : policy.getDescription());
-                                
-                                String sevStr = v.has("severity") ? v.get("severity").asText() : policy.getSeverity().name();
+                                f.setDescription(
+                                        v.has("description") ? v.get("description").asText() : policy.getDescription());
+
+                                String sevStr = v.has("severity") ? v.get("severity").asText()
+                                        : policy.getSeverity().name();
                                 f.setSeverity(Finding.Severity.valueOf(sevStr));
-                                
+
                                 f.setStatus(Finding.Status.OPEN);
-                                f.setFramework(Collections.singletonList(policy.getFramework() != null ? policy.getFramework() : "CUSTOM"));
+                                f.setFramework(Collections.singletonList(
+                                        policy.getFramework() != null ? policy.getFramework() : "CUSTOM"));
                                 f.setRegion(region);
                                 findings.add(f);
                             }
                         }
                     }
                 } catch (Exception e) {
-                    System.err.println("Failed to evaluate custom policy: " + policy.getPolicyId() + " - " + e.getMessage());
+                    System.err.println(
+                            "Failed to evaluate custom policy: " + policy.getPolicyId() + " - " + e.getMessage());
                 }
             }
         }

@@ -17,6 +17,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/policies")
+@CrossOrigin(origins = "*")
 public class PolicyController {
 
     @Autowired
