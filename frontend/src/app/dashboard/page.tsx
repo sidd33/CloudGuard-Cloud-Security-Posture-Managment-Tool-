@@ -533,8 +533,10 @@ export default function Dashboard() {
                       Critical
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">4</TableCell>
-                  <TableCell className="text-right font-sans text-xs text-muted-foreground">9.5%</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">{criticalCount}</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-muted-foreground">
+                    {activeFindings > 0 ? ((criticalCount / activeFindings) * 100).toFixed(1) + '%' : '0%'}
+                  </TableCell>
                   <TableCell className="text-right pr-0 py-3">
                     <span className="inline-flex px-1.5 py-0.5 rounded bg-[var(--status-critical)] text-white text-[10px] font-bold">
                       Immediate Action
@@ -549,8 +551,10 @@ export default function Dashboard() {
                       High
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">12</TableCell>
-                  <TableCell className="text-right font-sans text-xs text-muted-foreground">28.6%</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">{highCount}</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-muted-foreground">
+                    {activeFindings > 0 ? ((highCount / activeFindings) * 100).toFixed(1) + '%' : '0%'}
+                  </TableCell>
                   <TableCell className="text-right pr-0 py-3">
                     <span className="inline-flex px-1.5 py-0.5 rounded bg-[var(--status-high)] text-white text-[10px] font-bold">
                       Review Recommended
@@ -565,8 +569,10 @@ export default function Dashboard() {
                       Medium
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">26</TableCell>
-                  <TableCell className="text-right font-sans text-xs text-muted-foreground">61.9%</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-foreground font-bold">{mediumCount}</TableCell>
+                  <TableCell className="text-right font-sans text-xs text-muted-foreground">
+                    {activeFindings > 0 ? ((mediumCount / activeFindings) * 100).toFixed(1) + '%' : '0%'}
+                  </TableCell>
                   <TableCell className="text-right pr-0 py-3">
                     <span className="inline-flex px-1.5 py-0.5 rounded bg-[var(--status-medium)] text-white text-[10px] font-bold">
                       Monitor
@@ -577,7 +583,7 @@ export default function Dashboard() {
             </Table>
           </div>
           <div className="text-[11px] text-muted-foreground pt-3 border-t border-border text-center font-sans">
-            Total active vulnerabilities: 42
+            Total active vulnerabilities: {activeFindings}
           </div>
         </Card>
       </div>

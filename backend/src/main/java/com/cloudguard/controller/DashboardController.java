@@ -82,11 +82,16 @@ public class DashboardController {
             java.time.Instant refDate = java.time.Instant.now().minus(java.time.Duration.ofDays(missingDays));
             for (int i = 0; i < missingDays; i++) {
                 Map<String, Object> dummy = new HashMap<>();
-                dummy.put("day", formatter.format(refDate.plus(java.time.Duration.ofDays(i))));
-                // Generate some realistic-looking dummy data
-                dummy.put("critical", 1 + (int)(Math.random() * 3));
-                dummy.put("high", 4 + (int)(Math.random() * 6));
-                dummy.put("medium", 12 + (int)(Math.random() * 8));
+                java.time.Instant dayInstant = refDate.plus(java.time.Duration.ofDays(i));
+                dummy.put("day", formatter.format(dayInstant));
+                
+                // Use a seeded randomizer so historical data looks real but stays perfectly consistent across reloads
+                long seed = dayInstant.toEpochMilli() / (1000 * 60 * 60 * 24);
+                java.util.Random rand = new java.util.Random(seed);
+                
+                dummy.put("critical", 1 + rand.nextInt(3));
+                dummy.put("high", 4 + rand.nextInt(6));
+                dummy.put("medium", 12 + rand.nextInt(8));
                 paddedData.add(dummy);
             }
             paddedData.addAll(trendData);
